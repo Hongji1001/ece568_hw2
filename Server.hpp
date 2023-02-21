@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_TCP_PACKET_SIZE 65535
 
