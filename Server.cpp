@@ -90,7 +90,7 @@ char* Server::recvData(int flag){
 
   int numbytes;
 
-  if ((numbytes = recv(socket_fd, recvbuff, MAX_TCP_PACKET_SIZE - 1, flag)) == -1) {
+  if ((numbytes = recv(client_connection_fd, recvbuff, MAX_TCP_PACKET_SIZE - 1, flag)) == -1) {
       hasError = 1;
       return nullptr;
   }

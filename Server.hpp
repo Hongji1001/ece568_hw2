@@ -10,7 +10,7 @@
 #include <string>
 #include <stdlib.h>
 
-#defind MAX_TCP_PACKET_SIZE 65535
+#define MAX_TCP_PACKET_SIZE 65535
 
 class Server{
     private:
