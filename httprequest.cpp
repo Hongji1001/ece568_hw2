@@ -16,6 +16,26 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
     // record request and write log
 }
 
+std::string HttpRequest::getMethod() const
+{
+    return method;
+}
+
+std::string HttpRequest::getRequestTarget() const
+{
+    return requestTarget;
+}
+
+std::string HttpRequest::getPort() const
+{
+    return port;
+}
+
+std::string HttpRequest::getHost() const
+{
+    return host;
+}
+
 void HttpRequest::parseStartLine()
 {
     size_t requestLineEnd = httpRequest.find("\r\n");

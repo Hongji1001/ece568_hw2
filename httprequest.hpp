@@ -24,22 +24,10 @@ private:
 
 public:
     HttpRequest(const std::string &rawRequest) {}
-    std::string getMethod()
-    {
-        return method;
-    }
-    std::string getRequestTarget()
-    {
-        return requestTarget;
-    }
-    std::string getPort()
-    {
-        return port;
-    }
-    std::string getHost()
-    {
-        return host;
-    }
+    std::string getMethod() const {}
+    std::string getRequestTarget() const {}
+    std::string getPort() const {}
+    std::string getHost() const {}
     void parseStartLine() {}
     void parseHeaderFields() {}
     void parseHostAndPort() {}
