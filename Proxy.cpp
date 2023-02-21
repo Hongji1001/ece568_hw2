@@ -11,7 +11,7 @@ void Proxy::startRun(){
     Server server = Server(port);
     // check whether proxy server can init successful
     if (server.getErrorSign() == -1){
-        // how to exit gracefully 
+        // how to exit gracefully return nullptr
         cout << "can not init as a server";
         exit(EXIT_FAILURE);
     }
@@ -26,7 +26,6 @@ void Proxy::startRun(){
         // recv msg
         char* msg = server.recvData(0);
         Request* newRequest = new Request(msg);
-
         pthread_t thread;
         pthread_create(&thread, NULL, handle, newRequest);
     }
@@ -38,7 +37,6 @@ void* Proxy::handle(Request* newRequest){
     string rawMsgContent(newRequest->raw_request_line, newRequest->raw_request_line + msgLen);
 
     HttpRequest newHttpRequest = HttpRequest(rawMsgContent);
-
     // start to verify http request
     cout << newHttpRequest.getHost() << endl;
     cout << newHttpRequest.getMethod() << endl;

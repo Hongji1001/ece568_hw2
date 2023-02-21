@@ -16,6 +16,7 @@ int next_request_id = 0;
 class Request{
     private:
         char* raw_request_line;
+        
         int request_id;
 
     public:
