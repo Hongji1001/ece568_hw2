@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 #include "client.hpp"
 
 Client::Client(unsigned short int port, const char *hostname) : serverPort(port)
@@ -99,4 +97,3 @@ Client::~Client()
     {
     }
 }
->>>>>>> kirk
