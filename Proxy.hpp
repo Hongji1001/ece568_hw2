@@ -3,6 +3,7 @@
 #include "Request.hpp"
 #include <pthread.h>
 #include "httprequest.hpp"
+#include "HttpResponse.hpp"
 
 
 class Proxy{
