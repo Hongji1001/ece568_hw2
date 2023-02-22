@@ -1,13 +1,13 @@
-#include "httprequest.hpp"
+#include "HttpResponse.hpp"
 
-HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest)
+HttpResponse::HttpResponse(const std::string &rawResponse) : httpResponse(rawResponse)
 {
     try
     {
-        // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
-        parseStartLine();
+        // TODO: 返回的报文长度可能会有错误
+        parseStatusLine();
         parseHeaderFields();
-        parseHostAndPort();
+        parseMsgBody();
     }
     catch (const std::exception &e)
     {
@@ -17,67 +17,62 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
     // record request and write log
 }
 
-std::string HttpRequest::getMethod() const
+std::string HttpResponse::getStatusCode() const
 {
-    return method;
+    return statusCode;
 }
 
-std::string HttpRequest::getRequestTarget() const
+std::string HttpResponse::getReasonPhrase() const
 {
-    return requestTarget;
+    return reasonPhrase;
 }
 
-std::string HttpRequest::getPort() const
+std::string HttpResponse::getMsgBody() const
 {
-    return port;
+    return msgBody;
 }
 
-std::string HttpRequest::getHost() const
+std::string HttpResponse::getRawResponseText() const
 {
-    return host;
+    return httpResponse;
 }
 
-std::string HttpRequest::getRawRequestText() const
+void HttpResponse::parseStatusLine()
 {
-    return httpRequest;
-}
-
-void HttpRequest::parseStartLine()
-{
-    size_t requestLineEnd = httpRequest.find("\r\n"); // TODO: there is no \r\n in request header
-    std::string requestLine = httpRequest.substr(0, requestLineEnd);
-    std::vector<std::string> requestLineParts;
+    size_t statusLineEnd = httpResponse.find("\r\n"); // TODO: there is no \r\n in request header
+    std::string statusLine = httpResponse.substr(0, statusLineEnd);
+    std::vector<std::string> statusLineParts;
     size_t pos = 0;
     while (pos != std::string::npos)
     {
-        size_t end = requestLine.find(" ", pos);
+        size_t end = statusLine.find(" ", pos);
         if (end == std::string::npos)
         {
-            requestLineParts.push_back(requestLine.substr(pos));
+            statusLineParts.push_back(statusLine.substr(pos));
             break;
         }
-        requestLineParts.push_back(requestLine.substr(pos, end - pos));
+        statusLineParts.push_back(statusLine.substr(pos, end - pos));
         pos = end + 1;
     }
-    if (requestLineParts.size() != 3)
+    if (statusLineParts.size() != 3)
     {
         throw std::exception();
     }
-    if (!(requestLineParts[0] == "GET" || requestLineParts[0] == "POST" || requestLineParts[0] == "CONNECT"))
+    if (statusLineParts[1] >= "600" || statusLineParts[1] < "100")
     {
-        // method is not correct
+        // status code is not correct
         throw std::exception();
     }
-    method = requestLineParts[0];
-    requestTarget = requestLineParts[1];
-    httpVersion = requestLineParts[2];
+    httpVersion = statusLineParts[0];
+    statusCode = statusLineParts[1];
+    reasonPhrase = statusLineParts[2];
 }
 
-void HttpRequest::parseHeaderFields()
+void HttpResponse::parseHeaderFields()
 {
-    size_t requestLineEnd = httpRequest.find("\r\n");
-    size_t headerEnd = httpRequest.find("\r\n\r\n");
-    std::string headers = httpRequest.substr(requestLineEnd + 2, headerEnd - requestLineEnd - 2);
+    size_t statusLineEnd = httpResponse.find("\r\n");
+    size_t headerEnd = httpResponse.find("\r\n\r\n");
+    std::string headers = httpResponse.substr(statusLineEnd + 2, headerEnd - statusLineEnd - 2);
     size_t pos = 0;
     while (true)
     {
@@ -99,27 +94,8 @@ void HttpRequest::parseHeaderFields()
     }
 }
 
-void HttpRequest::parseHostAndPort()
+void HttpResponse::parseMsgBody()
 {
-    if (headerMap.count("Host") <= 0)
-    {
-        throw std::exception();
-    }
-    std::string Host = headerMap["Host"];
-    size_t pos = Host.find(":");
-    if (pos != std::string::npos)
-    {
-        host = Host.substr(0, pos);
-        port = Host.substr(pos + 1);
-        if (port.empty())
-        {
-            port = "80";
-        }
-    }
-    else
-    {
-        host = Host;
-        port = "80";
-    }
-    // 如果Host为空按理说是不需要处理的
+    size_t headerEnd = httpResponse.find("\r\n\r\n");
+    msgBody = httpResponse.substr(headerEnd + 4);
 }
