@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_TCP_PACKET_SIZE 65535
 
@@ -33,8 +34,8 @@ class Server{
     // try accept
     int tryAccept();
     // send and recv data
-    char* recvData(int flag);
-    void sendData(void* data, int flag);
+    std::string recvData(int flag);
+    void sendData(void* data, size_t dataSize, int flag);
 
     int getErrorSign();
 

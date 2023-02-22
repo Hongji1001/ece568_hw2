@@ -1,16 +1,17 @@
-#include <cstdio>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <iostream>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <vector>
-#include <cstring>
-#include <string>
-#include <stdlib.h>
+#include "Proxy.hpp"
 
 
 int main(){
-    
+    // TODO: ADD daemon
+    // LOG(INFO)<<"testDaemon start";
+    // if(daemon(0, 0) == -1){
+    //     std::cout<<"error\n"<<std::endl;
+    //     exit(-1);
+    // }
+    Proxy* proxy_daemon = new Proxy(12345);
+    // Proxy proxy_daemon = Proxy(12345);
+    proxy_daemon->startRun();
+    std::cout << "exit" << std::endl;
+    return EXIT_SUCCESS;
+
 }

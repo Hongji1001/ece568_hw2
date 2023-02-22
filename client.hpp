@@ -20,15 +20,15 @@ private:
     struct addrinfo *serverAddr;
 
 public:
-    Client(unsigned short int port, const char *hostname) {}
-    int getSockfd() const {}
-    void getAddrinfo() {}
-    void createSocket() {}
-    void createConnect() {}
-    void closeClient() {}
-    void sendRequest(void *msg, const size_t size) {}
-    std::string recvResponse() {}
-    ~Client() {}
+    Client(unsigned short int port, const char *hostname);
+    int getSockfd() const;
+    void getAddrinfo();
+    void createSocket();
+    void createConnect();
+    void closeClient();
+    void sendRequest(const void *msg, const size_t size);
+    std::string recvResponse();
+    ~Client();
 };
 
 #endif
