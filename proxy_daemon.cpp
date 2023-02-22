@@ -13,5 +13,4 @@ int main(){
     proxy_daemon->startRun();
     std::cout << "exit" << std::endl;
     return EXIT_SUCCESS;
-
 }
