@@ -50,6 +50,7 @@ void* Proxy::handle(void* newRequest){
     Client proxy_own_client = Client(webserver_port_num, webserver_hostname);
     const char* http_raw_text = const_cast<char *>(newHttpRequest.getRawRequestText().c_str());
     size_t http_raw_text_size = newHttpRequest.getRawRequestText().size();
+    std::cout << http_raw_text << std::endl;
     proxy_own_client.sendRequest(http_raw_text, http_raw_text_size);
 
     std::string webserver_response = proxy_own_client.recvResponse();
