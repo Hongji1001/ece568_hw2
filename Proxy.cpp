@@ -33,8 +33,6 @@ void Proxy::startRun(){
 
 
 void* Proxy::handle(void* newRequest){
-
-
     HttpRequest newHttpRequest = HttpRequest(((Request*)newRequest)->getRequestLine());
     // start to verify http request
     std::cout << newHttpRequest.getHost() << std::endl;
@@ -46,6 +44,7 @@ void* Proxy::handle(void* newRequest){
 
     // did not cache
     sendMsgToWebserver(newHttpRequest);
+
     return nullptr;
 }
 
@@ -63,4 +62,13 @@ void Proxy::sendMsgToWebserver(HttpRequest newHttpRequest){
     // recv response from webserver
     std::string webserver_response = proxy_own_client.recvResponse();
     std::cout << webserver_response << std::endl;
+
+    std::cout << std::endl;
+    std::cout << std::endl;
+
+    HttpResponse recvHttpResponse = HttpResponse(webserver_response);
+    std::cout << recvHttpResponse.getStatusCode() << std::endl;
+    std::cout << recvHttpResponse.getReasonPhrase() << std::endl;
+    std::cout << recvHttpResponse.getMsgBody() << std::endl;
+
 }
