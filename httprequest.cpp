@@ -5,6 +5,7 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
     try
     {
         // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
+        verifyBasicFormat();
         parseStartLine();
         parseHeaderFields();
         parseHostAndPort();
@@ -40,6 +41,16 @@ std::string HttpRequest::getHost() const
 std::string HttpRequest::getRawRequestText() const
 {
     return httpRequest;
+}
+
+void HttpRequest::verifyBasicFormat()
+{
+    std::regex pattern("(^([A-Z]+) (/\\S*) HTTP/(\\d)\\.(\\d)\\r\\n(.*: .*\\r\\n)*\\r\\n(.*))");
+    // if not match basic format
+    if (!std::regex_match(httpRequest, pattern))
+    {
+        throw std::exception();
+    }
 }
 
 void HttpRequest::parseStartLine()

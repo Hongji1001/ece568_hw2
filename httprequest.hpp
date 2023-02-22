@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <regex>
 
 /* danger log */
 // 1.请求体可能是有误的，没有考虑request存在问题的情况
@@ -30,6 +31,7 @@ public:
     std::string getPort() const;
     std::string getHost() const;
     std::string getRawRequestText() const;
+    void verifyBasicFormat();
     void parseStartLine();
     void parseHeaderFields();
     void parseHostAndPort();
