@@ -4,6 +4,7 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
 {
     try
     {
+        // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
         parseStartLine();
         parseHeaderFields();
         parseHostAndPort();
@@ -36,9 +37,14 @@ std::string HttpRequest::getHost() const
     return host;
 }
 
+std::string HttpRequest::getRawRequestText() const
+{
+    return httpRequest;
+}
+
 void HttpRequest::parseStartLine()
 {
-    size_t requestLineEnd = httpRequest.find("\r\n");
+    size_t requestLineEnd = httpRequest.find("\r\n"); // TODO: there is no \r\n in request header
     std::string requestLine = httpRequest.substr(0, requestLineEnd);
     std::vector<std::string> requestLineParts;
     size_t pos = 0;
@@ -57,8 +63,9 @@ void HttpRequest::parseStartLine()
     {
         throw std::exception();
     }
-    if (requestLineParts[0] != "GET" || requestLineParts[0] != "POST" || requestLineParts[0] != "CONNECT")
+    if (!(requestLineParts[0] == "GET" || requestLineParts[0] == "POST" || requestLineParts[0] == "CONNECT"))
     {
+        // method is not correct
         throw std::exception();
     }
     method = requestLineParts[0];

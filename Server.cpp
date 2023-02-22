@@ -1,7 +1,5 @@
-
 #include "Server.hpp"
 
-using namepsace std;
 Server::Server(int port_num) : port_num(port_num) {
   hasError = 0;
   if (setUpStruct() == -1){
@@ -25,8 +23,8 @@ int Server::setUpStruct(){
   host_info.ai_family   = AF_UNSPEC;
   host_info.ai_socktype = SOCK_STREAM;
   host_info.ai_flags    = AI_PASSIVE;
-
-  status = getaddrinfo(nullptr, port_num, &host_info, &host_info_list);
+  std::string port_str = std::to_string(port_num);
+  status = getaddrinfo(nullptr, port_str.c_str(), &host_info, &host_info_list);
   if (status != 0) {
     // "Error: cannot get address info for host"
     return -1;
@@ -84,7 +82,7 @@ int Server::getErrorSign(){
   return hasError;
 }
 
-char* Server::recvData(int flag){
+std::string Server::recvData(int flag){
   // TODO: select function
   char recvbuff[MAX_TCP_PACKET_SIZE];
 
@@ -95,12 +93,12 @@ char* Server::recvData(int flag){
       return nullptr;
   }
   recvbuff[numbytes] = '\0';
-  return recvbuff;
+  return std::string(recvbuff);
 }
 
-void Server::sendData(void* data, int flag){
+void Server::sendData(void* data, size_t dataSize, int flag){
   int status;
-  status = send(client_connection_fd, data, strlen(data), flag); 
+  status = send(client_connection_fd, data, dataSize, flag); 
   if (status == -1){
     hasError = 1;
   }

@@ -10,15 +10,19 @@
 #include <string>
 #include <stdlib.h>
 
-int next_request_id = 0;
+static int next_request_id = 0;
 
 
 class Request{
     private:
-        char* raw_request_line;
-        
+        std::string raw_request_line;
         int request_id;
 
     public:
-        explicit Request(char* msg);
-}
+        Request(std::string msg){
+            raw_request_line = msg;
+            request_id = next_request_id;
+            next_request_id ++ ;
+        }
+        std::string getRequestLine();
+};

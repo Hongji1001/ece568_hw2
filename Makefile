@@ -1,13 +1,18 @@
-CFLAGS=-std=gnu++98 -pedantic -Wall -Werror -ggdb3 
-PROGS=proxy_daemon testclient
-
+CFLAGS=-std=gnu++11 -pedantic -Wall -ggdb3
+PROGS=testclient proxy_daemon
+# PROGS=testHttpRequest ## DEBUG HttpRequest.cpp
+OBJS=$(patsubst %,%.o,$(PROGS)) *.o
 
 all: $(PROGS)
-proxy_daemon: proxy_daemon.cpp
-	g++ $(CFLAGS) -o $@ $<
-testclient: testclient.cpp
-	g++ $(CFLAGS) -o $@ $<
+proxy_daemon: proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp
+	g++ -g $(CFLAGS) -o proxy_daemon proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp -lpthread
+testclient: testclient.cpp client.cpp
+	g++ -g $(CFLAGS) -o testclient testclient.cpp client.cpp
+
+## DEBUG HttpRequest.cpp
+testHttpRequest: testHttpRequest.cpp httprequest.cpp
+	g++ -g $(CFLAGS) -o testHttpRequest testHttpRequest.cpp httprequest.cpp
+
 .PHONY: clean
 clean:
-	rm -f *~ $(PROGS)
-
+	rm -f *~ $(PROGS) $(OBJS)

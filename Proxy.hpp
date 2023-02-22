@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "client.hpp"
 #include "Request.hpp"
 #include <pthread.h>
 #include "httprequest.hpp"
@@ -9,9 +10,8 @@ class Proxy{
         int port;
 
     public:
-        explicit Proxy(int port_num);
+        explicit Proxy(int port_num) : port(port_num) {};
         void startRun();
-        void* handle(char* msg);
-
-
+        static void* handle(void* newRequest);
+        void sendMsgToWebserver(HttpRequest newRequest);
 };
