@@ -1,6 +1,6 @@
 #include "client.hpp"
 
-Client::Client(unsigned short int port, const char *hostname) : serverPort(port)
+Client::Client(unsigned short int port, std::string hostname) : serverPort(port)
 {
     serverHostname = hostname;
     try

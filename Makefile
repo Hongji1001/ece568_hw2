@@ -6,8 +6,8 @@ OBJS=$(patsubst %,%.o,$(PROGS)) *.o
 all: $(PROGS)
 proxy_daemon: proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp
 	g++ -g $(CFLAGS) -o proxy_daemon proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp -lpthread
-testclient: testclient.cpp client.cpp
-	g++ -g $(CFLAGS) -o testclient testclient.cpp client.cpp
+testclient: testclient.cpp Server.cpp Request.cpp httprequest.cpp client.cpp
+	g++ -g $(CFLAGS) -o testclient testclient.cpp Server.cpp Request.cpp httprequest.cpp client.cpp -lpthread
 
 ## DEBUG HttpRequest.cpp
 testHttpRequest: testHttpRequest.cpp httprequest.cpp

@@ -44,13 +44,21 @@ void* Proxy::handle(void* newRequest){
 
     // did not cache
     std::cout << std::endl;
+    std::cout << std::endl;
     // sendMsgToWebserver(newHttpRequest);
     unsigned short webserver_port_num = std::stoul(newHttpRequest.getPort());
-    const char* webserver_hostname = const_cast<char *>(newHttpRequest.getHost().c_str());
+    const char* webserver_hostname = newHttpRequest.getHost().c_str();
+    std::cout << "webserver_hostname" << std::endl;
+    std::cout << webserver_hostname << std::endl;
     Client proxy_own_client = Client(webserver_port_num, webserver_hostname);
-    const char* http_raw_text = const_cast<char *>(newHttpRequest.getRawRequestText().c_str());
+    std::cout << std::endl;
+    std::cout << std::endl;
+    const char* http_raw_text = newHttpRequest.getRawRequestText().c_str();
+    std::cout << "newHttpRequest.getRawRequestText().c_str()" << std::endl;
+    std::cout << newHttpRequest.getRawRequestText().c_str() << std::endl;
     size_t http_raw_text_size = newHttpRequest.getRawRequestText().size();
-    std::cout << http_raw_text << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
     proxy_own_client.sendRequest(http_raw_text, http_raw_text_size);
 
     std::string webserver_response = proxy_own_client.recvResponse();

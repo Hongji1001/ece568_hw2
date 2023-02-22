@@ -20,7 +20,8 @@ private:
     struct addrinfo *serverAddr;
 
 public:
-    Client(unsigned short int port, const char *hostname);
+    // Client(unsigned short int port, const char *hostname);
+    Client(unsigned short int port, std::string hostname);
     int getSockfd() const;
     void getAddrinfo();
     void createSocket();
