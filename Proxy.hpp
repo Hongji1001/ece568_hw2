@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "httprequest.hpp"
 #include "HttpResponse.hpp"
+#include <algorithm>
 #define PORT_NUM 12345
 
 class Proxy{
@@ -14,6 +15,8 @@ class Proxy{
         explicit Proxy(const int port_num) : port_num(port_num) {};
         void startRun();
         static void* handle(void* newRequest);
+        static void handleCONNECT(HttpRequest newHttpRequest, void* newRequest);
+        static void handlePOST(HttpRequest newHttpRequest, void* newRequest);
         static std::string sendMsgToWebserver(HttpRequest newHttpRequest);
-        static void sendMsgBackToClient(int sockfd, const char* msg, size_t size);
+        static void sendMsgFromProxy(int sockfd, const char* msg, size_t size);
 };

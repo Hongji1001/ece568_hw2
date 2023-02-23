@@ -5,7 +5,7 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
     try
     {
         // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
-        verifyBasicFormat();
+        // verifyBasicFormat();
         parseStartLine();
         parseHeaderFields();
         parseHostAndPort();
