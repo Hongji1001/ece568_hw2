@@ -144,4 +144,4 @@ std::string HttpRequest::buildConRequest(std::string &Etag)
     head += "If-None-Match: " + Etag + "\r\n\r\n";
     std::string conRequest = head + msgBody;
     return conRequest;
-};
+}

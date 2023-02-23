@@ -35,7 +35,7 @@ public:
     void parseStartLine();
     void parseHeaderFields();
     void parseHostAndPort();
-    std::string buildConRequest(std::string &Etag){};
+    std::string buildConRequest(std::string &Etag);
 };
 
 // 1.验证方法是否是GET POST CONNECT中的一种, 不是就返回405 method not allowed
