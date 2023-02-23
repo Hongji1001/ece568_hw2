@@ -45,7 +45,7 @@ std::string HttpRequest::getRawRequestText() const
 
 void HttpRequest::verifyBasicFormat()
 {
-    std::regex pattern("(^([A-Z]+) (/\\S*) HTTP/(\\d)\\.(\\d)\\r\\n(.*: .*\\r\\n)*\\r\\n(.*))");
+    std::regex pattern("(^([A-Z]+) (\\S*) HTTP/(\\d)\\.(\\d)\\r\\n(.*: .*\\r\\n)*\\r\\n(.*))");
     // if not match basic format
     if (!std::regex_match(httpRequest, pattern))
     {

@@ -5,6 +5,11 @@ std::string Request::getRequestLine(){
 }
 
 
+int Request::getClientFd(){
+    return client_connection_fd;
+}
+
+
 
 
 
