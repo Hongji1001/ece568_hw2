@@ -134,3 +134,14 @@ void HttpRequest::parseHostAndPort()
     }
     // 如果Host为空按理说是不需要处理的
 }
+
+// 需要判断好请求中是否没有If-None-Match头
+std::string HttpRequest::buildConRequest(std::string &Etag)
+{
+    size_t headerEnd = httpRequest.find("\r\n\r\n");
+    std::string head = httpRequest.substr(0, headerEnd + 2);
+    std::string msgBody = httpRequest.substr(headerEnd + 4);
+    head += "If-None-Match: " + Etag + "\r\n\r\n";
+    std::string conRequest = head + msgBody;
+    return conRequest;
+};
