@@ -114,7 +114,7 @@ bool Cache::isFull()
     return size >= CAPACITY;
 }
 
-bool Cache::isFresh(const std::string &cacheKey)
+bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
 {
     // 不检查no-cache, no-store字段，这两个字段的检查交给proxy完成
     // isFresh方法仅查找max-age字段
@@ -128,7 +128,7 @@ bool Cache::isFresh(const std::string &cacheKey)
     size_t maxAge = tempResponse.getMaxAge();
     // danger log: 默认响应中不存在Age字段
     size_t age = 0;
-    std::string requestTime = resToCheck->requestTime;
+    // std::string requestTime = resToCheck->requestTime;
     std::string responseTime = resToCheck->responseTime;
     size_t responseDelay = Time::calTimeDiff(responseTime, requestTime);
     std::string now = Time::getLocalUTC();
