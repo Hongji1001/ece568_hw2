@@ -2,6 +2,7 @@
 
 HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest)
 {
+    requestTime = Time::getLocalUTC();
     try
     {
         // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
@@ -41,6 +42,16 @@ std::string HttpRequest::getHost() const
 std::string HttpRequest::getRawRequestText() const
 {
     return httpRequest;
+}
+
+std::string HttpRequest::getRequestTime() const
+{
+    return requestTime;
+}
+
+std::map<std::string, std::string> HttpRequest::getHeaderMap() const
+{
+    return headerMap;
 }
 
 void HttpRequest::verifyBasicFormat()
@@ -136,12 +147,21 @@ void HttpRequest::parseHostAndPort()
 }
 
 // 需要判断好请求中是否没有If-None-Match头
-std::string HttpRequest::buildConRequest(std::string &Etag)
+void HttpRequest::buildConRequest(const std::string &Etag, const std::string &LastModified)
 {
     size_t headerEnd = httpRequest.find("\r\n\r\n");
     std::string head = httpRequest.substr(0, headerEnd + 2);
     std::string msgBody = httpRequest.substr(headerEnd + 4);
-    head += "If-None-Match: " + Etag + "\r\n\r\n";
-    std::string conRequest = head + msgBody;
-    return conRequest;
+    if (Etag.size() != 0)
+    {
+        head += "If-None-Match: " + Etag + "\r\n";
+        headerMap["If-None-Match"] = Etag;
+    }
+
+    if (LastModified.size() != 0)
+    {
+        head += "If-Modified-Since: " + LastModified + "\r\n";
+        headerMap["If-Modified-Since"] = LastModified;
+    }
+    httpRequest = head + "\r\n" + msgBody;
 }

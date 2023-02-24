@@ -29,6 +29,7 @@ public:
     bool isFull();                                                             // 判断缓存是否已经满了
     bool isFresh(const std::string &cacheKey, const std::string &requestTime); // 检验新鲜度
     // 验证缓存是否过期,前提是cacheMap中包含cachekey
+    std::map<std::string, CacheNode *> getCacheMap() const;
 };
 
 class CacheNode
@@ -38,8 +39,8 @@ public:
     std::string rawResponseHead; // max-age, raw reponse, date/age_value can be parsed from it
     std::string rawResponseBody;
     std::string responseTime;
-    // std::string requestTime; // to be determined
     std::string Etag;
+    std::string LastModified;
     CacheNode *prev;
     CacheNode *next;
     CacheNode(const HttpResponse &response); // 放入响应体，同时自动记录放入响应体的时间

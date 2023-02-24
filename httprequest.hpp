@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <regex>
+#include "Time.hpp"
 
 /* danger log */
 // 1.请求体可能是有误的，没有考虑request存在问题的情况
@@ -22,6 +23,7 @@ private:
     std::string httpVersion;
     std::string port;
     std::string host;
+    std::string requestTime;
     std::map<std::string, std::string> headerMap;
 
 public:
@@ -31,11 +33,13 @@ public:
     std::string getPort() const;
     std::string getHost() const;
     std::string getRawRequestText() const;
+    std::string getRequestTime() const;
+    std::map<std::string, std::string> getHeaderMap() const;
     void verifyBasicFormat();
     void parseStartLine();
     void parseHeaderFields();
     void parseHostAndPort();
-    std::string buildConRequest(std::string &Etag);
+    void buildConRequest(const std::string &Etag, const std::string &LastModified);
 };
 
 // 1.验证方法是否是GET POST CONNECT中的一种, 不是就返回405 method not allowed

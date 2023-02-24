@@ -61,7 +61,14 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         // 更新CacheNode的Etag和responseTime
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
-        cachedRes->Etag = response.getHeadmap()["Etag"];
+        if (response.getHeadmap().count("Etag") != 0)
+        {
+            cachedRes->Etag = response.getHeadmap()["Etag"];
+        }
+        if (response.getHeadmap().count("Last-Modified") != 0)
+        {
+            cachedRes->LastModified = response.getHeadmap()["Last-Modified"];
+        }
         // 如果状态码是304, 不更新消息体，只更新行和头
         if (response.getStatusCode() == "304")
         {
@@ -140,12 +147,24 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     return currentAge < maxAge;
 }
 
+std::map<std::string, CacheNode *> Cache::getCacheMap() const
+{
+    return cacheMap;
+}
+
 CacheNode::CacheNode(const HttpResponse &response)
 {
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
-    Etag = response.getHeadmap()["Etag"];
+    if (response.getHeadmap().count("Etag") != 0)
+    {
+        Etag = response.getHeadmap()["Etag"];
+    }
+    if (response.getHeadmap().count("Last-Modified") != 0)
+    {
+        LastModified = response.getHeadmap()["Last-Modified"];
+    }
     responseTime = Time::getLocalUTC();
     prev = NULL;
     next = NULL;
