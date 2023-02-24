@@ -17,6 +17,7 @@ class Proxy{
         static void* handle(void* newRequest);
         static void handleCONNECT(HttpRequest newHttpRequest, void* newRequest);
         static void handlePOST(HttpRequest newHttpRequest, void* newRequest);
-        static std::string sendMsgToWebserver(HttpRequest newHttpRequest);
+        static void handleGET(HttpRequest newHttpRequest, void* newRequest);
+        // static std::string sendMsgToWebserver(HttpRequest newHttpRequest);
         static void sendMsgFromProxy(int sockfd, const char* msg, size_t size);
 };

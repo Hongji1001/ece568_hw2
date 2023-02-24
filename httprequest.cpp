@@ -2,7 +2,7 @@
 
 HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest)
 {
-    requestTime = Time::getLocalUTC();
+    // requestTime = Time::getLocalUTC();  动了
     try
     {
         // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
