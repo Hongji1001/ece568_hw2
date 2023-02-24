@@ -87,13 +87,12 @@ std::string Server::recvData(int flag){
   char recvbuff[MAX_TCP_PACKET_SIZE];
 
   int numbytes;
-
   if ((numbytes = recv(client_connection_fd, recvbuff, MAX_TCP_PACKET_SIZE - 1, flag)) == -1) {
       hasError = 1;
       return nullptr;
   }
   recvbuff[numbytes] = '\0';
-  return std::string(recvbuff);
+  return std::string(recvbuff, numbytes);
 }
 
 void Server::sendData(void* data, size_t dataSize, int flag){

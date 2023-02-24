@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <string>
+#include <vector>
 #include <exception>
 
 #define MAX_TCP_PACKET_SIZE 65535

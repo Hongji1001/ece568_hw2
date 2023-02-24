@@ -15,9 +15,13 @@ class HttpResponse
 private:
     std::string httpResponse;
     std::string statusCode;
+    std::string statusLine;
     std::string reasonPhrase;
     std::string httpVersion;
+    std::string Headers;
     std::string msgBody;
+    size_t msgBodySize;
+    size_t msgContentLength;
     bool isChunked;
     std::map<std::string, std::string> headerMap;
 
@@ -27,6 +31,13 @@ public:
     std::string getReasonPhrase() const;
     std::string getMsgBody() const;
     std::string getRawResponseText() const;
+    std::string getStartLine() const;
+    std::string getHead() const;
+    size_t getMaxAge() const;
+    size_t getMsgBodySize() const;
+    size_t getContentLength() const;
+    bool checkIsChunked() const;
+    std::map<std::string, std::string> getHeaderMap() const;
     void parseStatusLine();
     void parseHeaderFields();
     void parseMsgBody();

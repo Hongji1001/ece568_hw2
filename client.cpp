@@ -75,6 +75,7 @@ void Client::sendRequest(const void *msg, const size_t size)
 
 std::string Client::recvResponse()
 {
+    // std::vector<char> buff(MAX_TCP_PACKET_SIZE);
     char buf[MAX_TCP_PACKET_SIZE];
     int numBytes = 0;
     if ((numBytes = recv(sockfd, buf, sizeof(buf), 0)) == -1)
@@ -83,7 +84,7 @@ std::string Client::recvResponse()
         throw std::exception();
     }
     buf[numBytes] = '\0';
-    return std::string(buf);
+    return std::string(buf, numBytes);
 }
 
 Client::~Client()
