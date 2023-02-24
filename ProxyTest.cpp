@@ -64,7 +64,7 @@ void *Proxy::handle(void *newRequest)
         return nullptr;
     }
     // if httprequest has cached
-
+    validation(newHttpRequest, ((Request *)newRequest)->getClientFd());
     // did not cache
     std::string web_response = sendMsgToWebserver(newHttpRequest);
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), web_response.c_str(), web_response.size());

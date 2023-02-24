@@ -13,15 +13,16 @@ class Proxy
 {
 private:
     const int port_num;
-    Cache cache;
+    static Cache cache;
 
 public:
-    explicit Proxy(const int port_num) : port_num(port_num), cache(CACHE_CAPACITY){};
+    explicit Proxy(const int port_num) : port_num(port_num){};
     void startRun();
     static void *handle(void *newRequest);
     static void handleCONNECT(HttpRequest newHttpRequest, void *newRequest);
     static void handlePOST(HttpRequest newHttpRequest, void *newRequest);
     static std::string sendMsgToWebserver(HttpRequest newHttpRequest);
     static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
-    void validation(HttpRequest &request, int sockfd);
+    static void validation(HttpRequest &request, int sockfd);
 };
+Cache Proxy::cache(CACHE_CAPACITY);
