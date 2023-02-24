@@ -130,7 +130,7 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     HttpResponse tempResponse = HttpResponse(resToCheck->getFullResponse());
     // danger log: 默认响应中存在Date字段
     // Date需要转换为UTC时间
-    std::string Date = Time::gmtToUTC(tempResponse.getHeapMap()["Date"]);
+    std::string Date = Time::gmtToUTC(tempResponse.getHeadMap()["Date"]);
     // 这里要实现找到max-age字段
     size_t maxAge = tempResponse.getMaxAge();
     // danger log: 默认响应中不存在Age字段

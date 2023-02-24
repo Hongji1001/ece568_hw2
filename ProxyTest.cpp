@@ -269,10 +269,15 @@ void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
     }
 }
 
-void Proxy::validation(HttpRequest &request)
+void Proxy::validation(HttpRequest &request, int sockfd)
 {
-    // 验证是否禁用缓存
-    if (request.getHeaderMap().count("cache-control") == 0 || (request.getHeaderMap().count("cache-control") != 0 && request.getHeaderMap()["cache-control"].find("no-store")))
+    // 验证是否禁用代理缓存
+    // 未禁用的情况：
+    // 1.没有cache-control字段
+    // 2.有cache-control字段但没有private,no-store字段中的任意一个
+    if (request.getHeaderMap().count("cache-control") == 0 ||
+        (request.getHeaderMap().count("cache-control") != 0 &&
+         (request.getHeaderMap()["cache-control"].find("private") == std::string::npos && request.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)))
     {
         // 不禁用缓存
         std::string cacheKey = request.getRequestTarget();
@@ -298,7 +303,7 @@ void Proxy::validation(HttpRequest &request)
                             // 返回304
                             // TODO:修改响应头的状态码为304
                             cache.getCacheMap()[cacheKey]->rawResponseStartLine = "GET 304 Not Modified HTTP/1.1";
-                            sendMsgFromProxy(, cache.get(cacheKey).c_str(), );
+                            sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                             return;
                         }
                         if (request.getHeaderMap().count("If-Modified-Since") != 0 && request.getHeaderMap()["If-Modified-Since"] == cache.getCacheMap()[cacheKey]->LastModified)
@@ -306,18 +311,18 @@ void Proxy::validation(HttpRequest &request)
                             // 返回304
                             // TODO:修改响应头的状态码为304
                             cache.getCacheMap()[cacheKey]->rawResponseStartLine = "GET 304 Not Modified HTTP/1.1";
-                            sendMsgFromProxy(, cache.get(cacheKey).c_str(), );
+                            sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                             return;
                         }
                         // 不相同的话就要返回缓存的全部内容，以200OK的状态缓存
-                        sendMsgFromProxy(, cache.get(cacheKey).c_str(), );
+                        sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                         return;
                     }
                     else
                     {
                         // 不是条件请求
                         // 直接返回缓存的响应,缓存中的status code应该都是200OK,只有300行需要修改为304
-                        sendMsgFromProxy(, cache.get(cacheKey).c_str(), );
+                        sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                         return;
                     }
                 }

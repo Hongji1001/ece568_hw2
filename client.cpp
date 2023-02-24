@@ -83,7 +83,6 @@ std::string Client::recvResponse()
         throw std::exception();
     }
     buf[numBytes] = '\0';
-
     return std::string(buf);
 }
 
