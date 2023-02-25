@@ -49,7 +49,7 @@ void Cache::removeTail()
     tail = tail->prev;
     delete tempTail;
     size--;
-};
+}
 
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
 
@@ -61,36 +61,55 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         // 更新CacheNode的Etag和responseTime
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
-        if (response.getHeadmap().count("Etag") != 0)
+        if (response.getHeaderMap().count("Etag") != 0)
         {
-            cachedRes->Etag = response.getHeadmap()["Etag"];
+            cachedRes->Etag = response.getHeaderMap()["Etag"];
         }
-        if (response.getHeadmap().count("Last-Modified") != 0)
+        if (response.getHeaderMap().count("Last-Modified") != 0)
         {
-            cachedRes->LastModified = response.getHeadmap()["Last-Modified"];
+            cachedRes->LastModified = response.getHeaderMap()["Last-Modified"];
         }
-        // 如果状态码是304, 不更新消息体，只更新行和头
+        // // 如果状态码是304, 不更新消息体，只更新行和头
+        // if (response.getStatusCode() == "304")
+        // {
+        //     // 如果是条件请求，则需要修改状态码
+
+        //     // 如果不是条件请求，则状态码是200 OK
+        // }
+        // // 否则，只更新消息体以及行和头
+        // else if (response.getStatusCode() == "200")
+        // {
+        //     cachedRes->rawResponseBody = response.getMsgBody();
+        // }
+        // else
+        // {
+        //     // TODO:如果是其他的状态码，怎么办？
+        // }
+
         if (response.getStatusCode() == "304")
         {
-        }
-        // 否则，只更新消息体以及行和头
-        else if (response.getStatusCode() == "200")
-        {
-            cachedRes->rawResponseBody = response.getMsgBody();
+            // 如果是304状态码且是条件请求
+            // 储存更新为200状态码的响应行,
+            // 储存发回响应的头和行，响应体不用更新
+            cachedRes->rawResponseStartLine = response.getHttpVersion() + " 200 OK";
+            // 储存发回响应的头
+            // 响应体不更新
         }
         else
         {
-            // TODO:如果是其他的状态码，怎么办？
+            // 如果是200OK
+            // 储存发回响应的行，头，体
+            cachedRes->rawResponseStartLine = response.getStartLine();
+            cachedRes->rawResponseBody = response.getMsgBody();
         }
-        // 更新响应行和头
-        cachedRes->rawResponseStartLine = response.getStartLine();
+        // 储存发回响应的头
+        // cachedRes->rawResponseStartLine = response.getStartLine();
         cachedRes->rawResponseHead = response.getHead();
         // 移至链表最前方
         moveToHead(cachedRes);
         return;
     }
     // 如果是强制缓存
-    // TODO:检查缓存策略的工作交给proxy做吧
     // 缓存满了,删除最后一个结点
     if (isFull())
     {
@@ -114,7 +133,7 @@ std::string Cache::get(const std::string &cacheKey)
 bool Cache::isCached(const std::string &cacheKey)
 {
     return cacheMap.count(cacheKey) != 0;
-};
+}
 
 bool Cache::isFull()
 {
@@ -130,7 +149,7 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     HttpResponse tempResponse = HttpResponse(resToCheck->getFullResponse());
     // danger log: 默认响应中存在Date字段
     // Date需要转换为UTC时间
-    std::string Date = Time::gmtToUTC(tempResponse.getHeadMap()["Date"]);
+    std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["Date"]);
     // 这里要实现找到max-age字段
     size_t maxAge = tempResponse.getMaxAge();
     // danger log: 默认响应中不存在Age字段
@@ -152,18 +171,26 @@ std::map<std::string, CacheNode *> Cache::getCacheMap() const
     return cacheMap;
 }
 
+Cache::~Cache()
+{
+    for (auto it = cacheMap.begin(); it != cacheMap.end(); ++it)
+    {
+        delete it->second;
+    }
+}
+
 CacheNode::CacheNode(const HttpResponse &response)
 {
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
-    if (response.getHeadmap().count("Etag") != 0)
+    if (response.getHeaderMap().count("Etag") != 0)
     {
-        Etag = response.getHeadmap()["Etag"];
+        Etag = response.getHeaderMap()["Etag"];
     }
-    if (response.getHeadmap().count("Last-Modified") != 0)
+    if (response.getHeaderMap().count("Last-Modified") != 0)
     {
-        LastModified = response.getHeadmap()["Last-Modified"];
+        LastModified = response.getHeaderMap()["Last-Modified"];
     }
     responseTime = Time::getLocalUTC();
     prev = NULL;
@@ -172,5 +199,5 @@ CacheNode::CacheNode(const HttpResponse &response)
 
 std::string CacheNode::getFullResponse()
 {
-    return rawResponseStartLine + rawResponseHead + rawResponseBody;
+    return rawResponseStartLine + "\r\n" + rawResponseHead + "\r\n" + rawResponseBody;
 }

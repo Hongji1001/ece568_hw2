@@ -32,6 +32,7 @@ public:
     std::string getMsgBody() const;
     std::string getRawResponseText() const;
     std::string getStartLine() const;
+    std::string getHttpVersion() const;
     std::string getHead() const;
     size_t getMaxAge() const;
     size_t getMsgBodySize() const;

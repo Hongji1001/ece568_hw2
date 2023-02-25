@@ -57,17 +57,23 @@ void *Proxy::handle(void *newRequest)
         handleCONNECT(newHttpRequest, newRequest);
         return nullptr;
     }
-
-    if (newHttpRequest.getMethod() == "POST")
+    else if (newHttpRequest.getMethod() == "POST")
     {
-        handlePOST(newHttpRequest, newRequest);
+        std::cout << "Start to handle POST request" << std::endl;
+        // handlePOST(newHttpRequest, newRequest);
+        handleGET(newHttpRequest, newRequest);
+        return nullptr;
+    }
+    else
+    {
+        // GET Request
+        // if httprequest has cached
+        std::cout << "Start to handle GET request" << std::endl;
+        // did not cache
+        handleGET(newHttpRequest, newRequest);
         return nullptr;
     }
     // if httprequest has cached
-    validation(newHttpRequest, ((Request *)newRequest)->getClientFd());
-    // did not cache
-    std::string web_response = sendMsgToWebserver(newHttpRequest);
-    sendMsgFromProxy(((Request *)newRequest)->getClientFd(), web_response.c_str(), web_response.size());
     return nullptr;
 }
 
@@ -225,12 +231,11 @@ void Proxy::handlePOST(HttpRequest newHttpRequest, void *newRequest)
     }
 }
 
-std::string Proxy::sendMsgToWebserver(HttpRequest newHttpRequest)
+void Proxy::handleGET(HttpRequest newHttpRequest, void *newRequest)
 {
-    // send request to webserver
+    // send request to webserver first and get response back
     // get port and hostname of webserver
     unsigned short webserver_port_num = std::stoul(newHttpRequest.getPort());
-    // const char* webserver_hostname = newHttpRequest.getHost().c_str();
     std::cout << "webserver_port_num" << std::endl;
     std::cout << webserver_port_num << std::endl;
     std::cout << "newHttpRequest.getHost()" << std::endl;
@@ -239,20 +244,60 @@ std::string Proxy::sendMsgToWebserver(HttpRequest newHttpRequest)
     // send msg to webserver
     size_t http_raw_text_size = newHttpRequest.getRawRequestText().size();
     proxy_own_client.sendRequest(newHttpRequest.getRawRequestText().c_str(), http_raw_text_size);
-
     // recv response from webserver
     std::string webserver_response = proxy_own_client.recvResponse();
     std::cout << webserver_response << std::endl;
-
-    std::cout << std::endl;
-    std::cout << std::endl;
-
+    // check whether encoding is trunked data
     HttpResponse recvHttpResponse = HttpResponse(webserver_response);
-    std::cout << recvHttpResponse.getStatusCode() << std::endl;
-    std::cout << recvHttpResponse.getReasonPhrase() << std::endl;
-    std::cout << recvHttpResponse.getMsgBody() << std::endl;
-    return recvHttpResponse.getRawResponseText();
+    if (recvHttpResponse.checkIsChunked())
+    {
+        std::cout << "start sending chunked data" << std::endl;
+        size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
+        std::cout << recvHttpResponse.getRawResponseText().c_str() << std::endl;
+        sendMsgFromProxy(((Request *)newRequest)->getClientFd(), webserver_response.c_str(), webserver_response.size());
+        // continue to recv and send
+        while (true)
+        {
+            std::string temp = proxy_own_client.recvResponse();
+            std::cout << temp << std::endl;
+            if (temp.empty())
+                break;
+            sendMsgFromProxy(((Request *)newRequest)->getClientFd(), temp.c_str(), temp.size());
+        }
+    }
+    else
+    {
+        // normal case
+        std::cout << "start sending normal GET data" << std::endl;
+        size_t msgContentLength = recvHttpResponse.getContentLength();
+        size_t msgBodySize = recvHttpResponse.getMsgBodySize();
+        if (msgBodySize < msgContentLength)
+        {
+            std::cout << "The data is not fully received" << std::endl;
+            std::cout << "msgContentLength: " << msgContentLength << std::endl;
+            std::cout << "msgBodySize: " << msgBodySize << std::endl;
+            while (msgBodySize < msgContentLength)
+            {
+                std::string temp = proxy_own_client.recvResponse();
+                if (temp.empty())
+                    break;
+                webserver_response += temp;
+                msgBodySize += temp.size();
+            }
+            recvHttpResponse = HttpResponse(webserver_response);
+            size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
+            sendMsgFromProxy(((Request *)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+        }
+        else
+        {
+            recvHttpResponse = HttpResponse(webserver_response);
+            size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
+            sendMsgFromProxy(((Request *)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+        }
+    }
 }
+
+// std::string Proxy::sendMsgToWebserver(HttpRequest newHttpRequest){}
 
 void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
 {
@@ -271,10 +316,7 @@ void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
 
 void Proxy::validation(HttpRequest &request, int sockfd)
 {
-    // 验证是否禁用代理缓存
-    // 未禁用的情况：
-    // 1.没有cache-control字段
-    // 2.有cache-control字段但没有private,no-store字段中的任意一个
+    // 验证是否禁用代理缓存 未禁用的情况：1.没有cache-control字段 2.有cache-control字段但没有private,no-store字段中的任意一个
     if (request.getHeaderMap().count("cache-control") == 0 ||
         (request.getHeaderMap().count("cache-control") != 0 &&
          (request.getHeaderMap()["cache-control"].find("private") == std::string::npos && request.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)))
@@ -284,34 +326,27 @@ void Proxy::validation(HttpRequest &request, int sockfd)
         // 验证是否有代理缓存
         if (cache.isCached(cacheKey))
         {
-            // 有代理缓存
+            // 不禁用缓存，有代理缓存
             // 验证有cache-control且是否有no-cache字段或者must-validation字段或者没有cache-control字段
             if (request.getHeaderMap().count("cache-control") == 0 || (request.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos && request.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos))
             {
-                // 没有cache-control或者没有相应字段
+                // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段
                 // 验证新鲜度
                 if (cache.isFresh(cacheKey, request.getRequestTime()))
                 {
-                    // 新鲜
+                    // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，新鲜
                     // 验证是否是条件请求
                     if (request.getHeaderMap().count("If-None-Match") != 0 || request.getHeaderMap().count("If-Modified-Since") != 0)
                     {
-                        // 是条件请求
+                        // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，新鲜，是条件请求
                         // 比较缓存中的Etag/LastModified字段是否相同
-                        if (request.getHeaderMap().count("If-None-Match") != 0 && request.getHeaderMap()["If-None-Match"] == cache.getCacheMap()[cacheKey]->Etag)
+                        if ((request.getHeaderMap().count("If-None-Match") != 0 && request.getHeaderMap()["If-None-Match"] == cache.getCacheMap()[cacheKey]->Etag) ||
+                            (request.getHeaderMap().count("If-Modified-Since") != 0 && request.getHeaderMap()["If-Modified-Since"] == cache.getCacheMap()[cacheKey]->LastModified))
                         {
-                            // 返回304
-                            // TODO:修改响应头的状态码为304
-                            cache.getCacheMap()[cacheKey]->rawResponseStartLine = "GET 304 Not Modified HTTP/1.1";
-                            sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
-                            return;
-                        }
-                        if (request.getHeaderMap().count("If-Modified-Since") != 0 && request.getHeaderMap()["If-Modified-Since"] == cache.getCacheMap()[cacheKey]->LastModified)
-                        {
-                            // 返回304
-                            // TODO:修改响应头的状态码为304
-                            cache.getCacheMap()[cacheKey]->rawResponseStartLine = "GET 304 Not Modified HTTP/1.1";
-                            sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
+                            // 返回304状态码,给到最新的响应头
+                            std::string newResponse = "HTTP/1.1 304 Not Modified\r\n" + cache.getCacheMap()[cacheKey]->rawResponseHead + "\r\n";
+                            // cache.getCacheMap()[cacheKey]->rawResponseStartLine = "HTTP/1.1 304 Not Modified";
+                            sendMsgFromProxy(sockfd, newResponse.c_str(), newResponse.size());
                             return;
                         }
                         // 不相同的话就要返回缓存的全部内容，以200OK的状态缓存
@@ -320,53 +355,98 @@ void Proxy::validation(HttpRequest &request, int sockfd)
                     }
                     else
                     {
-                        // 不是条件请求
-                        // 直接返回缓存的响应,缓存中的status code应该都是200OK,只有300行需要修改为304
+                        // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，新鲜，不是条件请求
+                        // 直接返回缓存的响应,缓存中的status code应该都是200OK,只有347行需要修改为304
                         sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                         return;
                     }
                 }
                 else
                 {
-                    // 不新鲜
+                    // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，不新鲜
                     // 验证是否是条件请求
                     if (request.getHeaderMap().count("If-None-Match") == 0 && request.getHeaderMap().count("If-Modified-Since") == 0)
                     {
-                        // 不是条件请求
+                        // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，不新鲜，不是条件请求
                         // 添加条件请求信息
                         request.buildConRequest(cache.getCacheMap()[cacheKey]->Etag, cache.getCacheMap()[cacheKey]->LastModified);
                         // 发回web验证
                         HttpResponse webResponse = sendMsgToWebserver(request);
-                        // TODO:处理响应
+                        // 放入缓存
+                        cache.put(webResponse, cacheKey);
+                        // 取出缓存并发送
+                        sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                     }
                     else
                     {
-                        // 是条件请求
+                        // 不禁用缓存，有代理缓存，没有cache-control或者没有相应字段，不新鲜，是条件请求
                         // 直接转发请求进行验证
                         HttpResponse webResponse = sendMsgToWebserver(request);
                         // TODO:处理响应
+                        cache.put(webResponse, cacheKey);
+                        // 取出缓存并发送
+                        sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
                     }
                 }
             }
             else
             {
-                // 有cache-control且有相应字段
-                // 直接转发请求进行验证
-                HttpResponse webResponse = sendMsgToWebserver(request);
-                // TODO:处理响应
+                // 有代理缓存，有cache-control且有相应字段，直接进行过期验证
+                // 验证是否是条件请求
+                if (request.getHeaderMap().count("If-None-Match") == 0 && request.getHeaderMap().count("If-Modified-Since") == 0)
+                {
+                    // 有代理缓存，有cache-control且有相应字段，不是条件请求
+                    // 添加条件请求信息
+                    request.buildConRequest(cache.getCacheMap()[cacheKey]->Etag, cache.getCacheMap()[cacheKey]->LastModified);
+                    // 发回web验证
+                    HttpResponse webResponse = sendMsgToWebserver(request);
+                    // 放入缓存
+                    cache.put(webResponse, cacheKey);
+                    // 检验是否是304
+                    if (webResponse.getStatusCode() == "304")
+                    {
+                        std::string newResponse = "HTTP/1.1 304 Not Modified\r\n" + cache.getCacheMap()[cacheKey]->rawResponseHead + "\r\n";
+                        sendMsgFromProxy(sockfd, newResponse.c_str(), newResponse.size());
+                        return;
+                    }
+                    // 取出缓存并发送
+                    sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
+                }
+                else
+                {
+                    // 有代理缓存，有cache-control且有相应字段，是条件请求
+                    // 直接转发
+                    HttpResponse webResponse = sendMsgToWebserver(request);
+                    // TODO:处理响应
+                    // 放入响应
+                    cache.put(webResponse, cacheKey);
+                    // 检验是否是304
+                    if (webResponse.getStatusCode() == "304")
+                    {
+                        std::string newResponse = "HTTP/1.1 304 Not Modified\r\n" + cache.getCacheMap()[cacheKey]->rawResponseHead + "\r\n";
+                        sendMsgFromProxy(sockfd, newResponse.c_str(), newResponse.size());
+                        return;
+                    }
+                    // 取出缓存并发送
+                    sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
+                }
             }
         }
         else
         {
-            // 没有代理缓存，直接转发给web
+            // 不禁用缓存，没有代理缓存，直接转发给web
             HttpResponse webResponse = sendMsgToWebserver(request);
             // TODO:处理响应
+            cache.put(webResponse, cacheKey);
+            // 取出缓存并发送
+            sendMsgFromProxy(sockfd, cache.get(cacheKey).c_str(), cache.get(cacheKey).size());
         }
     }
     else
     {
         // 禁用缓存
         HttpResponse webResponse = sendMsgToWebserver(request);
-        // TODO:处理响应
+        // 直接返回响应
+        sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
     }
 }
