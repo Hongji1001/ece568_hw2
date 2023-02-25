@@ -76,6 +76,20 @@ void Client::sendRequest(const void *msg, const size_t size)
 std::string Client::recvResponse()
 {
     // std::vector<char> buff(MAX_TCP_PACKET_SIZE);
+    // std::string ans;
+    // int numBytes = 0;
+    // if ((numBytes = recv(sockfd, &buff.data()[0], MAX_TCP_PACKET_SIZE, 0)) == -1)
+    // {
+    //     perror("client recv");
+    //     throw std::exception();
+    // }
+
+    // for (int i = 0; i < numBytes; i ++ ){
+    //     ans += buff[i];
+    // }
+    // ans += '\0';
+    // return ans;
+
     char buf[MAX_TCP_PACKET_SIZE];
     int numBytes = 0;
     if ((numBytes = recv(sockfd, buf, sizeof(buf), 0)) == -1)
@@ -83,7 +97,7 @@ std::string Client::recvResponse()
         perror("client recv");
         throw std::exception();
     }
-    buf[numBytes] = '\0';
+    // buf[numBytes] = '\0';
     return std::string(buf, numBytes);
 }
 
