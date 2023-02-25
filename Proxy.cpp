@@ -153,55 +153,25 @@ void Proxy::handleCONNECT(HttpRequest newHttpRequest, void* newRequest){
 }
 
 void Proxy::handlePOST(HttpRequest newHttpRequest, void* newRequest){
-
-    //     浏览器发起请求 TCP 连接
-    unsigned short webserver_port_num = std::stoul(newHttpRequest.getPort());
-    // const char* webserver_hostname = newHttpRequest.getHost().c_str();
-    std::cout << "webserver_port_num" << std::endl;
-    std::cout << webserver_port_num << std::endl;
-    std::cout << "newHttpRequest.getHost()" << std::endl;
-    std::cout << newHttpRequest.getHost() << std::endl;
-    Client proxy_own_client = Client(webserver_port_num, newHttpRequest.getHost());
-    // send msg to webserver
-    size_t http_raw_text_size = newHttpRequest.getRawRequestText().size();
-    proxy_own_client.sendRequest(newHttpRequest.getRawRequestText().c_str(), http_raw_text_size);
-
-    // recv response from webserver
-    std::string webserver_response = proxy_own_client.recvResponse();
-    std::cout << webserver_response << std::endl;
-    HttpResponse recvHttpResponse = HttpResponse(webserver_response);
-    std::cout << recvHttpResponse.getStatusCode() << std::endl;
-    std::cout << recvHttpResponse.getReasonPhrase() << std::endl;
-    std::cout << recvHttpResponse.getMsgBody() << std::endl;
-    // 服务器返回100 Continue响应
-    if (recvHttpResponse.getStatusCode() != "100" ||  recvHttpResponse.getReasonPhrase() != "Continue"){
-        return;
-    } else{
-        std::vector<char> buff(MAX_TCP_PACKET_SIZE);
-        int proxy_to_webserver_fd = proxy_own_client.getSockfd();
-        int browser_to_proxy_fd = ((Request*)newRequest)->getClientFd();
-        int numbytes;
-        // 浏览器发送数据
-        numbytes = recv(browser_to_proxy_fd, &buff.data()[0], MAX_TCP_PACKET_SIZE, 0);
-        if (numbytes < 0){
-            std::cout << "recv error" << std::endl;
-            return;
-        }
-        numbytes = send(proxy_to_webserver_fd, buff.data(), numbytes, 0);
-        if (numbytes < 0){
-            std::cout << "send error" << std::endl;
-            return;
-        }
-        // 服务器返回 200 OK响应
-        webserver_response = proxy_own_client.recvResponse();
-        std::cout << "new new new webserver_response" << std::endl;
-        std::cout << webserver_response << std::endl;
-        send(browser_to_proxy_fd, webserver_response.c_str(), webserver_response.size(), 0);
-        return;
-    }
+    // send request to webserver and get HttpResponse
+    HttpResponse recvHttpResponse = sendMsgToWebserver(newHttpRequest, newRequest);
+    // send raw text of httpResponse to browser
+    size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
+    sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+    return;
 }
 
 void Proxy::handleGET(HttpRequest newHttpRequest, void* newRequest){
+    // send request to webserver and get HttpResponse
+    HttpResponse recvHttpResponse = sendMsgToWebserver(newHttpRequest, newRequest);
+
+    // send raw text of httpResponse to browser
+    size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
+    sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+}
+
+
+HttpResponse Proxy::sendMsgToWebserver(HttpRequest newHttpRequest, void* newRequest){
     // send request to webserver first and get response back
     // get port and hostname of webserver
     unsigned short webserver_port_num = std::stoul(newHttpRequest.getPort());
@@ -245,18 +215,12 @@ void Proxy::handleGET(HttpRequest newHttpRequest, void* newRequest){
                 webserver_response += temp;
                 msgBodySize += temp.size();
             }
-            recvHttpResponse = HttpResponse(webserver_response);
-            size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
-            sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
-        } else{
-            recvHttpResponse = HttpResponse(webserver_response);
-            size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
-            sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+            return HttpResponse(webserver_response);
+        } else {
+            return HttpResponse(webserver_response);
         }
     }
 }
-
-// std::string Proxy::sendMsgToWebserver(HttpRequest newHttpRequest){}
 
 
 void Proxy::sendMsgFromProxy(int sockfd, const char* msg, size_t size){
