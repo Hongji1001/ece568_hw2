@@ -7,7 +7,6 @@
 #include <algorithm>
 #include "Cache.hpp"
 #define PORT_NUM 12345
-#define CACHE_CAPACITY 100
 
 class Proxy
 {
@@ -22,7 +21,8 @@ public:
     static void handleCONNECT(HttpRequest newHttpRequest, void *newRequest);
     static void handlePOST(HttpRequest newHttpRequest, void *newRequest);
     static void handleGET(HttpRequest newHttpRequest, void *newRequest);
+    static void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest);
+    static void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest);
     static HttpResponse sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequest);
     static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
 };
-Cache Proxy::cache(CACHE_CAPACITY);

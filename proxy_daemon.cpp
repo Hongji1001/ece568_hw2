@@ -1,5 +1,5 @@
 #include "ProxyTest.hpp"
-
+Cache Proxy::cache;
 int main()
 {
     // TODO: ADD daemon

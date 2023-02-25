@@ -8,8 +8,8 @@ void Cache::addFromHead(CacheNode *nodeToAdd)
         size++;
         return;
     }
-    nodeToAdd->next = head->next;
-    head->next->prev = nodeToAdd;
+    nodeToAdd->next = head;
+    head->prev = nodeToAdd;
     head = nodeToAdd;
     size++;
 }
@@ -50,11 +50,13 @@ void Cache::removeTail()
     delete tempTail;
     size--;
 }
-
+Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
 
 void Cache::put(const HttpResponse &response, const std::string &cacheKey)
 {
+    std::cout << "成功进入缓存，缓存容量为 " << this->CAPACITY << " 当前大小为 " << this->size << std::endl;
+    // 验证响应是否禁用缓存
     // 如果是协商缓存
     if (isCached(cacheKey))
     {
@@ -73,14 +75,12 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         {
             // 如果是304状态码且是条件请求
             // 储存更新为200状态码的响应行,
-            // 储存发回响应的头和行，响应体不用更新
+            // 储存发回响应的头，响应体不用更新
             cachedRes->rawResponseStartLine = response.getHttpVersion() + " 200 OK";
-            // 储存发回响应的头
-            // 响应体不更新
         }
         else
         {
-            // 如果是200OK
+            // 如果是其他状态码
             // 储存发回响应的行，头，体
             cachedRes->rawResponseStartLine = response.getStartLine();
             cachedRes->rawResponseBody = response.getMsgBody();
@@ -93,6 +93,7 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         return;
     }
     // 如果是强制缓存
+    std::cout << "初次缓存" << std::endl;
     // 缓存满了,删除最后一个结点
     if (isFull())
     {
@@ -100,11 +101,19 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
     CacheNode *newCache = new CacheNode(response);
+    std::cout << response.getStartLine() << std::endl;
+    std::cout << response.getHead() << std::endl;
+    std::cout << "Etag: " << newCache->Etag << std::endl;
+    std::cout << "LastModified: " << newCache->LastModified << std::endl;
+    std::cout << "responseTime: " << newCache->responseTime << std::endl;
     newCache->rawResponseStartLine = response.getHttpVersion() + " 200 OK";
+    std::cout << newCache->rawResponseStartLine << std::endl;
     // 将新建的CacheNode添加到头部
     addFromHead(newCache);
+    std::cout << "已将新缓存添加到头部" << std::endl;
     // 加入cacheMap
     cacheMap[cacheKey] = newCache;
+    std::cout << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
 }
 
 std::string Cache::get(const std::string &cacheKey)
@@ -150,6 +159,36 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     return currentAge < maxAge;
 }
 
+bool Cache::isReqForbiden(const HttpRequest &request)
+{
+    return !(request.getHeaderMap().count("cache-control") == 0 ||
+             (request.getHeaderMap().count("cache-control") != 0 &&
+              (request.getHeaderMap()["cache-control"].find("private") == std::string::npos && request.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)));
+}
+
+bool Cache::isResForbiden(const HttpResponse &response)
+{
+    return !(response.getHeaderMap().count("cache-control") == 0 ||
+             (response.getHeaderMap().count("cache-control") != 0 &&
+              (response.getHeaderMap()["cache-control"].find("private") == std::string::npos && response.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)));
+}
+
+bool Cache::isReqMustRevalid(HttpRequest &request)
+{
+    return !(request.getHeaderMap().count("cache-control") == 0 ||
+             (request.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
+              request.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
+}
+
+bool Cache::isResMustRevalid(const std::string &cacheKey)
+{
+    CacheNode *cacheRes = cacheMap[cacheKey];
+    HttpResponse fullResponse(cacheRes->getFullResponse());
+    return !(fullResponse.getHeaderMap().count("cache-control") == 0 ||
+             (fullResponse.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
+              fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
+}
+
 std::map<std::string, CacheNode *> Cache::getCacheMap() const
 {
     return cacheMap;
@@ -161,6 +200,7 @@ Cache::~Cache()
     {
         delete it->second;
     }
+    std::cout << "缓存已释放" << std::endl;
 }
 
 CacheNode::CacheNode(const HttpResponse &response)

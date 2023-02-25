@@ -5,6 +5,7 @@
 #include "httprequest.hpp"
 #include "HttpResponse.hpp"
 #include "Time.hpp"
+#define CACHE_CAPACITY 100
 class CacheNode
 {
 public:
@@ -36,6 +37,7 @@ private:
     // request_time不好搞啊
     // 利用响应时间来实现LRU缓存策略
 public:
+    Cache();
     Cache(unsigned int cap);
     void put(const HttpResponse &Response, const std::string &cacheKey); // 放入缓存,放入链表头,加入cacheMap
 
@@ -43,6 +45,10 @@ public:
     bool isCached(const std::string &cacheKey);                                // 判断请求是否已经被缓存
     bool isFull();                                                             // 判断缓存是否已经满了
     bool isFresh(const std::string &cacheKey, const std::string &requestTime); // 检验新鲜度
+    bool isReqForbiden(const HttpRequest &request);                            // 检查请求是否禁用缓存
+    bool isResForbiden(const HttpResponse &response);                          // 检查响应是否禁用缓存
+    bool isReqMustRevalid(HttpRequest &request);                               // 检查请求是否强制验证
+    bool isResMustRevalid(const std::string &cacheKey);                        // 检查缓存是否强制验证
     // 验证缓存是否过期,前提是cacheMap中包含cachekey
     std::map<std::string, CacheNode *> getCacheMap() const;
     ~Cache();
