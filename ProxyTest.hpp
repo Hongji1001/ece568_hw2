@@ -21,9 +21,8 @@ public:
     static void *handle(void *newRequest);
     static void handleCONNECT(HttpRequest newHttpRequest, void *newRequest);
     static void handlePOST(HttpRequest newHttpRequest, void *newRequest);
-    static std::string sendMsgToWebserver(HttpRequest newHttpRequest);
-    static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
     static void handleGET(HttpRequest newHttpRequest, void *newRequest);
-    static void validation(HttpRequest &request, int sockfd);
+    static HttpResponse sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequest);
+    static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
 };
 Cache Proxy::cache(CACHE_CAPACITY);
