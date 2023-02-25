@@ -69,23 +69,6 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         {
             cachedRes->LastModified = response.getHeaderMap()["Last-Modified"];
         }
-        // // 如果状态码是304, 不更新消息体，只更新行和头
-        // if (response.getStatusCode() == "304")
-        // {
-        //     // 如果是条件请求，则需要修改状态码
-
-        //     // 如果不是条件请求，则状态码是200 OK
-        // }
-        // // 否则，只更新消息体以及行和头
-        // else if (response.getStatusCode() == "200")
-        // {
-        //     cachedRes->rawResponseBody = response.getMsgBody();
-        // }
-        // else
-        // {
-        //     // TODO:如果是其他的状态码，怎么办？
-        // }
-
         if (response.getStatusCode() == "304")
         {
             // 如果是304状态码且是条件请求
@@ -117,6 +100,7 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
     CacheNode *newCache = new CacheNode(response);
+    newCache->rawResponseStartLine = response.getHttpVersion() + " 200 OK";
     // 将新建的CacheNode添加到头部
     addFromHead(newCache);
     // 加入cacheMap
