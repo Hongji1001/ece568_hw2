@@ -54,7 +54,7 @@ void* Proxy::handle(void* newRequest){
     } else if (newHttpRequest.getMethod() == "POST"){
         std::cout << "Start to handle POST request" << std::endl;
         // handlePOST(newHttpRequest, newRequest);
-        handleGET(newHttpRequest, newRequest);
+        handlePOST(newHttpRequest, newRequest);
         return nullptr;
     } else{
         // GET Request
@@ -147,9 +147,10 @@ void Proxy::handleCONNECT(HttpRequest newHttpRequest, void* newRequest){
             buff.clear();
         }
     }
+
     // Keep this connection open until one side closes it (i.e. a 'recv' call returns with 0 bytes).
     // close(proxy_to_webserver_fd);
-    // close(browser_to_proxy_fd);
+    close(browser_to_proxy_fd);
 }
 
 void Proxy::handlePOST(HttpRequest newHttpRequest, void* newRequest){
@@ -158,16 +159,17 @@ void Proxy::handlePOST(HttpRequest newHttpRequest, void* newRequest){
     // send raw text of httpResponse to browser
     size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
     sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+    close(((Request*)newRequest)->getClientFd());
     return;
 }
 
 void Proxy::handleGET(HttpRequest newHttpRequest, void* newRequest){
     // send request to webserver and get HttpResponse
     HttpResponse recvHttpResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-
     // send raw text of httpResponse to browser
     size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
     sendMsgFromProxy(((Request*)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
+    close(((Request*)newRequest)->getClientFd());
 }
 
 
@@ -209,13 +211,16 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest newHttpRequest, void* newRequ
             std::cout << "The data is not fully received" << std::endl;
             std::cout << "msgContentLength: " <<  msgContentLength << std::endl;
             std::cout << "msgBodySize: " << msgBodySize <<  std::endl;
-            while(msgBodySize < msgContentLength){
-                std::string temp = proxy_own_client.recvResponse();
-                if (temp.empty()) break;
-                webserver_response += temp;
-                msgBodySize += temp.size();
-            }
-            return HttpResponse(webserver_response);
+
+            std::string all_response = recvAllData(proxy_own_client, webserver_response, msgContentLength, msgBodySize);
+            return HttpResponse(all_response);
+            // while(msgBodySize < msgContentLength){
+            //     temp = proxy_own_client.recvResponse();
+            //     if (temp.empty()) break;
+            //     webserver_response += temp;
+            //     msgBodySize += temp.size();
+            // }
+            // return HttpResponse(webserver_response);
         } else {
             return HttpResponse(webserver_response);
         }
@@ -238,6 +243,26 @@ void Proxy::sendMsgFromProxy(int sockfd, const char* msg, size_t size){
 }
 
 
+
+std::string Proxy::recvAllData(Client& client, std::string server_meg, size_t contentLength, size_t msgBodySize){
+    std::cout << "The data is receiving continually" << std::endl;
+    std::cout << "The reponse length is now:::" << server_meg.length() <<  std::endl;
+    char * server_meg_char = const_cast<char *>(server_meg.c_str());
+    size_t curr_len = server_meg.length();
+    size_t msgCurSize = msgBodySize;
+    size_t len = 0;
+    std::string recv_msg_str(server_meg_char, curr_len);
+    while(msgCurSize < contentLength) {
+        char recv_msg[65536] = {0};
+        if ((len = (recv(client.getSockfd(), recv_msg, sizeof(recv_msg), 0)) )  <= 0) break;
+        std::string temp(recv_msg, len);
+        recv_msg_str += temp;
+        msgCurSize += len;
+    }
+    std::cout << "The data completed receiving" << std::endl;
+    std::cout << "The data completed receiving size::: "  << recv_msg_str.size() << std::endl;
+    return recv_msg_str;
+}
 // std::string Proxy::recvMsgInProxy(int sockfd)
 // {
 //     char buf[MAX_TCP_PACKET_SIZE];

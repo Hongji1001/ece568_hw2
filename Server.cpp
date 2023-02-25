@@ -85,13 +85,12 @@ int Server::getErrorSign(){
 std::string Server::recvData(int flag){
   // TODO: select function
   char recvbuff[MAX_TCP_PACKET_SIZE];
-
   int numbytes;
-  if ((numbytes = recv(client_connection_fd, recvbuff, MAX_TCP_PACKET_SIZE - 1, flag)) == -1) {
+  if ((numbytes = recv(client_connection_fd, recvbuff, MAX_TCP_PACKET_SIZE, flag)) == -1) {
       hasError = 1;
       return nullptr;
   }
-  recvbuff[numbytes] = '\0';
+  // recvbuff[numbytes] = '\0';
   return std::string(recvbuff, numbytes);
 }
 
