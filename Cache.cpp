@@ -63,9 +63,9 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         // 更新CacheNode的Etag和responseTime
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
-        if (response.getHeaderMap().count("Etag") != 0)
+        if (response.getHeaderMap().count("ETag") != 0)
         {
-            cachedRes->Etag = response.getHeaderMap()["Etag"];
+            cachedRes->ETag = response.getHeaderMap()["ETag"];
         }
         if (response.getHeaderMap().count("Last-Modified") != 0)
         {
@@ -100,20 +100,23 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         removeTail();
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
+    std::cout << std::endl;
+    std::cout << "接收到的响应内容：" << std::endl;
     CacheNode *newCache = new CacheNode(response);
     std::cout << response.getStartLine() << std::endl;
     std::cout << response.getHead() << std::endl;
-    std::cout << "Etag: " << newCache->Etag << std::endl;
+    std::cout << "ETag: " << newCache->ETag << std::endl;
     std::cout << "LastModified: " << newCache->LastModified << std::endl;
     std::cout << "responseTime: " << newCache->responseTime << std::endl;
     newCache->rawResponseStartLine = response.getHttpVersion() + " 200 OK";
     std::cout << newCache->rawResponseStartLine << std::endl;
     // 将新建的CacheNode添加到头部
+    std::cout << "开始将响应存入缓存：" << std::endl;
     addFromHead(newCache);
     std::cout << "已将新缓存添加到头部" << std::endl;
     // 加入cacheMap
     cacheMap[cacheKey] = newCache;
-    std::cout << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
+    std::cout << "加入缓存的响应行为：" << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
 }
 
 std::string Cache::get(const std::string &cacheKey)
@@ -208,9 +211,9 @@ CacheNode::CacheNode(const HttpResponse &response)
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
-    if (response.getHeaderMap().count("Etag") != 0)
+    if (response.getHeaderMap().count("ETag") != 0)
     {
-        Etag = response.getHeaderMap()["Etag"];
+        ETag = response.getHeaderMap()["ETag"];
     }
     if (response.getHeaderMap().count("Last-Modified") != 0)
     {

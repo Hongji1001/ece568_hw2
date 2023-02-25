@@ -147,15 +147,15 @@ void HttpRequest::parseHostAndPort()
 }
 
 // 需要判断好请求中是否没有If-None-Match头
-void HttpRequest::buildConRequest(const std::string &Etag, const std::string &LastModified)
+void HttpRequest::buildConRequest(const std::string &ETag, const std::string &LastModified)
 {
     size_t headerEnd = httpRequest.find("\r\n\r\n");
     std::string head = httpRequest.substr(0, headerEnd + 2);
     std::string msgBody = httpRequest.substr(headerEnd + 4);
-    if (Etag.size() != 0)
+    if (ETag.size() != 0)
     {
-        head += "If-None-Match: " + Etag + "\r\n";
-        headerMap["If-None-Match"] = Etag;
+        head += "If-None-Match: " + ETag + "\r\n";
+        headerMap["If-None-Match"] = ETag;
     }
 
     if (LastModified.size() != 0)

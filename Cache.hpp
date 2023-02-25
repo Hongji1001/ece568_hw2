@@ -13,7 +13,7 @@ public:
     std::string rawResponseHead; // max-age, raw reponse, date/age_value can be parsed from it
     std::string rawResponseBody;
     std::string responseTime;
-    std::string Etag;
+    std::string ETag;
     std::string LastModified;
     CacheNode *prev;
     CacheNode *next;

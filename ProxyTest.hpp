@@ -21,8 +21,9 @@ public:
     static void handleCONNECT(HttpRequest newHttpRequest, void *newRequest);
     static void handlePOST(HttpRequest newHttpRequest, void *newRequest);
     static void handleGET(HttpRequest newHttpRequest, void *newRequest);
-    static void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest);
-    static void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest);
+    static void conditionalReq(HttpRequest newHttpRequest, void *newRequest);
+    static void nonConditionalReq(HttpRequest newHttpRequest, void *newRequest);
+    static std::string recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize);
     static HttpResponse sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequest);
     static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
 };
