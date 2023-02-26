@@ -334,7 +334,7 @@ void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest)
         {
             std::cout << "缓存不新鲜 ";
             HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-            if (webResponse.getStatusCode() != "304" || webResponse.getStatusCode() != "200")
+            if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
             {
                 std::cout << "非304或200直接发送响应返回浏览器 " << std::endl;
                 sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
@@ -358,7 +358,7 @@ void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest)
     {
         std::cout << "代理中没有缓存 ";
         HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-        if (webResponse.getStatusCode() != "304" || webResponse.getStatusCode() != "200")
+        if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
         {
             std::cout << "非304或200直接发送响应返回浏览器 " << std::endl;
             sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
@@ -405,7 +405,7 @@ void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest)
                 std::cout << "需要强制验证 ";
                 newHttpRequest.buildConRequest(cache.getCacheMap()[cacheKey]->ETag, cache.getCacheMap()[cacheKey]->LastModified);
                 HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-                if (webResponse.getStatusCode() != "304" || webResponse.getStatusCode() != "200")
+                if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
                 {
                     std::cout << "非304或200直接发送响应返回浏览器 " << std::endl;
                     sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
@@ -442,7 +442,7 @@ void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest)
                     std::cout << "缓存不新鲜 ";
                     newHttpRequest.buildConRequest(cache.getCacheMap()[cacheKey]->ETag, cache.getCacheMap()[cacheKey]->LastModified);
                     HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-                    if (webResponse.getStatusCode() != "304" || webResponse.getStatusCode() != "200")
+                    if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
                     {
                         std::cout << "非304或200直接发送响应返回浏览器 " << std::endl;
                         sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
@@ -467,8 +467,9 @@ void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest)
         {
             std::cout << "代理中没有缓存 ";
             HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-            std::cout << "446行:" << std::endl;
-            if (webResponse.getStatusCode() != "304" || webResponse.getStatusCode() != "200")
+            std::cout << "470行:" << std::endl;
+            std::cout << webResponse.getStartLine() << webResponse.getStatusCode() << std::endl;
+            if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
             {
                 std::cout << "非304或200直接发送响应返回浏览器 " << std::endl;
                 sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
