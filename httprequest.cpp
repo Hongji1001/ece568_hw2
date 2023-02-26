@@ -126,11 +126,11 @@ void HttpRequest::parseHeaderFields()
 
 void HttpRequest::parseHostAndPort()
 {
-    if (headerMap.count("Host") <= 0)
+    if (headerMap.count("host") <= 0)
     {
         throw std::exception();
     }
-    std::string Host = headerMap["Host"];
+    std::string Host = headerMap["host"];
     size_t pos = Host.find(":");
     if (pos != std::string::npos)
     {
@@ -158,13 +158,13 @@ void HttpRequest::buildConRequest(const std::string &ETag, const std::string &La
     if (ETag.size() != 0)
     {
         head += "If-None-Match: " + ETag + "\r\n";
-        headerMap["If-None-Match"] = ETag;
+        headerMap["if-none-match"] = ETag;
     }
 
     if (LastModified.size() != 0)
     {
         head += "If-Modified-Since: " + LastModified + "\r\n";
-        headerMap["If-Modified-Since"] = LastModified;
+        headerMap["if-modified-since"] = LastModified;
     }
     httpRequest = head + "\r\n" + msgBody;
 }

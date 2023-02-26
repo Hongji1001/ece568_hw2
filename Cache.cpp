@@ -65,13 +65,13 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
         // 更新CacheNode的Etag和responseTime
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
-        if (response.getHeaderMap().count("ETag") != 0)
+        if (response.getHeaderMap().count("etag") != 0)
         {
-            cachedRes->ETag = response.getHeaderMap()["ETag"];
+            cachedRes->ETag = response.getHeaderMap()["etag"];
         }
-        if (response.getHeaderMap().count("Last-Modified") != 0)
+        if (response.getHeaderMap().count("last-modified") != 0)
         {
-            cachedRes->LastModified = response.getHeaderMap()["Last-Modified"];
+            cachedRes->LastModified = response.getHeaderMap()["last-modified"];
         }
         if (response.getStatusCode() == "304")
         {
@@ -149,7 +149,7 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     HttpResponse tempResponse = HttpResponse(resToCheck->getFullResponse());
     // danger log: 默认响应中存在Date字段
     // Date需要转换为UTC时间
-    std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["Date"]);
+    std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["date"]);
     // 这里要实现找到max-age字段
     size_t maxAge = tempResponse.getMaxAge();
     // danger log: 默认响应中不存在Age字段
@@ -216,13 +216,13 @@ CacheNode::CacheNode(const HttpResponse &response)
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
-    if (response.getHeaderMap().count("ETag") != 0)
+    if (response.getHeaderMap().count("etag") != 0)
     {
-        ETag = response.getHeaderMap()["ETag"];
+        ETag = response.getHeaderMap()["etag"];
     }
-    if (response.getHeaderMap().count("Last-Modified") != 0)
+    if (response.getHeaderMap().count("last-modified") != 0)
     {
-        LastModified = response.getHeaderMap()["Last-Modified"];
+        LastModified = response.getHeaderMap()["last-modified"];
     }
     responseTime = Time::getLocalUTC();
     prev = NULL;

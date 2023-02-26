@@ -1,5 +1,5 @@
 CFLAGS=-std=gnu++11 -pedantic -Wall -ggdb3
-PROGS=testclient proxy_daemon
+PROGS=proxy_daemon
 # PROGS=testHttpRequest ## DEBUG HttpRequest.cpp
 # PROGS=testHttpResponse ## DEBUG HttpResponse.cpp
 OBJS=$(patsubst %,%.o,$(PROGS)) *.o
