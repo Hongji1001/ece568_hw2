@@ -39,7 +39,7 @@ private:
 public:
     Cache();
     Cache(unsigned int cap);
-    void put(const HttpResponse &Response, const std::string &cacheKey); // 放入缓存,放入链表头,加入cacheMap
+    void put(std::string response, const std::string &cacheKey); // 放入缓存,放入链表头,加入cacheMap
 
     std::string get(const std::string &cacheKey);                              // 从cacheMap中拿出缓存的响应,必须经过验证才行
     bool isCached(const std::string &cacheKey);                                // 判断请求是否已经被缓存

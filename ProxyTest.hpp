@@ -4,7 +4,6 @@
 #include <pthread.h>
 // #include "httprequest.hpp"
 // #include "HttpResponse.hpp"
-#include <algorithm>
 #include "Cache.hpp"
 #define PORT_NUM 12345
 

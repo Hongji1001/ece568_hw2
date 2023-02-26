@@ -115,6 +115,9 @@ void HttpRequest::parseHeaderFields()
         if (colon_pos != std::string::npos)
         {
             std::string key = line.substr(0, colon_pos);
+            std::transform(key.begin(), key.end(), key.begin(),
+                           [](unsigned char c)
+                           { return std::tolower(c); });
             std::string value = line.substr(colon_pos + 2); // +2 to skip ": "
             headerMap[key] = value;
         }
@@ -127,11 +130,11 @@ void HttpRequest::parseHeaderFields()
 
 void HttpRequest::parseHostAndPort()
 {
-    if (headerMap.count("Host") <= 0)
+    if (headerMap.count("host") <= 0)
     {
         throw std::exception();
     }
-    std::string Host = headerMap["Host"];
+    std::string Host = headerMap["host"];
     size_t pos = Host.find(":");
     if (pos != std::string::npos)
     {
@@ -159,13 +162,13 @@ void HttpRequest::buildConRequest(const std::string &ETag, const std::string &La
     if (ETag.size() != 0)
     {
         head += "If-None-Match: " + ETag + "\r\n";
-        headerMap["If-None-Match"] = ETag;
+        headerMap["if-none-match"] = ETag;
     }
 
     if (LastModified.size() != 0)
     {
         head += "If-Modified-Since: " + LastModified + "\r\n";
-        headerMap["If-Modified-Since"] = LastModified;
+        headerMap["if-modified-since"] = LastModified;
     }
     httpRequest = head + "\r\n" + msgBody;
 }

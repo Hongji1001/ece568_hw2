@@ -19,6 +19,7 @@ private:
     int sockfd;
 
     struct addrinfo *serverAddr;
+    int hasError;
 
 public:
     // Client(unsigned short int port, const char *hostname);

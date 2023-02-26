@@ -1,18 +1,39 @@
 #include "client.hpp"
 
-Client::Client(unsigned short int port, std::string hostname) : serverPort(port)
+Client::Client(unsigned short int port, std::string hostname) : serverPort(port), hasError(0)
 {
     serverHostname = hostname;
     try
     {
         getAddrinfo();
+    }
+    catch (const std::exception &e)
+    {
+        hasError = 1;
+        return;
+    }
+    try
+    {
         createSocket();
+    }
+    catch (const std::exception &e)
+    {
+        hasError = 2;
+        return;
+    }
+    try
+    {
         createConnect();
     }
     catch (const std::exception &e)
     {
+        hasError = 3;
+        return;
     }
-    freeaddrinfo(serverAddr);
+    if (hasError != 1)
+    {
+        freeaddrinfo(serverAddr);
+    }
 }
 int Client::getSockfd() const
 {

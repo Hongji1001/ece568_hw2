@@ -53,8 +53,10 @@ void Cache::removeTail()
 Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
 
-void Cache::put(const HttpResponse &response, const std::string &cacheKey)
+void Cache::put(std::string rawResponse, const std::string &cacheKey)
 {
+    std::cout << rawResponse << std::endl;
+    HttpResponse response(rawResponse);
     std::cout << "成功进入缓存，缓存容量为 " << this->CAPACITY << " 当前大小为 " << this->size << std::endl;
     // 验证响应是否禁用缓存
     // 如果是协商缓存
@@ -63,13 +65,13 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
         // 更新CacheNode的Etag和responseTime
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
-        if (response.getHeaderMap().count("ETag") != 0)
+        if (response.getHeaderMap().count("etag") != 0)
         {
-            cachedRes->ETag = response.getHeaderMap()["ETag"];
+            cachedRes->ETag = response.getHeaderMap()["etag"];
         }
-        if (response.getHeaderMap().count("Last-Modified") != 0)
+        if (response.getHeaderMap().count("last-modified") != 0)
         {
-            cachedRes->LastModified = response.getHeaderMap()["Last-Modified"];
+            cachedRes->LastModified = response.getHeaderMap()["last-modified"];
         }
         if (response.getStatusCode() == "304")
         {
@@ -101,10 +103,11 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
     std::cout << std::endl;
+    std::cout << response.getMsgBody() << std::endl;
     std::cout << "接收到的响应内容：" << std::endl;
     CacheNode *newCache = new CacheNode(response);
-    std::cout << response.getStartLine() << std::endl;
     std::cout << response.getHead() << std::endl;
+    std::cout << "HTTP version: " << response.getHttpVersion() << std::endl;
     std::cout << "ETag: " << newCache->ETag << std::endl;
     std::cout << "LastModified: " << newCache->LastModified << std::endl;
     std::cout << "responseTime: " << newCache->responseTime << std::endl;
@@ -117,6 +120,7 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     // 加入cacheMap
     cacheMap[cacheKey] = newCache;
     std::cout << "加入缓存的响应行为：" << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
+    std::cout << "加入缓存的响应体为：" << cacheMap[cacheKey]->rawResponseBody << std::endl;
 }
 
 std::string Cache::get(const std::string &cacheKey)
@@ -145,7 +149,7 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     HttpResponse tempResponse = HttpResponse(resToCheck->getFullResponse());
     // danger log: 默认响应中存在Date字段
     // Date需要转换为UTC时间
-    std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["Date"]);
+    std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["date"]);
     // 这里要实现找到max-age字段
     size_t maxAge = tempResponse.getMaxAge();
     // danger log: 默认响应中不存在Age字段
@@ -171,6 +175,7 @@ bool Cache::isReqForbiden(const HttpRequest &request)
 
 bool Cache::isResForbiden(const HttpResponse &response)
 {
+    std::cout << response.getHeaderMap().count("cache-control") << std::endl;
     return !(response.getHeaderMap().count("cache-control") == 0 ||
              (response.getHeaderMap().count("cache-control") != 0 &&
               (response.getHeaderMap()["cache-control"].find("private") == std::string::npos && response.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)));
@@ -211,13 +216,13 @@ CacheNode::CacheNode(const HttpResponse &response)
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
-    if (response.getHeaderMap().count("ETag") != 0)
+    if (response.getHeaderMap().count("etag") != 0)
     {
-        ETag = response.getHeaderMap()["ETag"];
+        ETag = response.getHeaderMap()["etag"];
     }
-    if (response.getHeaderMap().count("Last-Modified") != 0)
+    if (response.getHeaderMap().count("last-modified") != 0)
     {
-        LastModified = response.getHeaderMap()["Last-Modified"];
+        LastModified = response.getHeaderMap()["last-modified"];
     }
     responseTime = Time::getLocalUTC();
     prev = NULL;

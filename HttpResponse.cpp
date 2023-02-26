@@ -5,12 +5,16 @@ HttpResponse::HttpResponse(const std::string &rawResponse) : httpResponse(rawRes
     try
     {
         // TODO: 返回的报文长度可能会有错误
-        msgContentLength = 0;
+        // std::cout << "parseStatusLine" << std::endl;
         isChunked = false;
+        msgContentLength = 0;
         msgBodySize = 0;
         parseStatusLine();
+        // std::cout << "parseHeaderFields" << std::endl;
         parseHeaderFields();
+        // std::cout << "parseMsgBody" << std::endl;
         parseMsgBody();
+        // std::cout << "finished parse" << std::endl;
     }
     catch (const std::exception &e)
     {
@@ -120,7 +124,7 @@ void HttpResponse::parseStatusLine()
     while (pos != std::string::npos)
     {
         size_t end = statusLine.find(" ", pos);
-        if (end == std::string::npos)
+        if (statusLineParts.size() == 2)
         {
             statusLineParts.push_back(statusLine.substr(pos));
             break;
@@ -159,13 +163,16 @@ void HttpResponse::parseHeaderFields()
         if (colon_pos != std::string::npos)
         {
             std::string key = line.substr(0, colon_pos);
+            std::transform(key.begin(), key.end(), key.begin(),
+                           [](unsigned char c)
+                           { return std::tolower(c); });
             std::string value = line.substr(colon_pos + 2); // +2 to skip ": "
             headerMap[key] = value;
-            if (key == "Transfer-Encoding" && value == "chunked")
+            if (key == "transfer-encoding" && value == "chunked")
             {
                 isChunked = true;
             }
-            if (key == "Content-Length")
+            if (key == "content-length")
             {
                 isChunked = false;
                 msgContentLength = std::stoul(value);
