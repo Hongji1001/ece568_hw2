@@ -1,5 +1,5 @@
 #include "Proxy.hpp"
-// Cache Proxy::cache;
+Cache Proxy::cache;
 ProxyLog Proxy::proxyLog;
 
 

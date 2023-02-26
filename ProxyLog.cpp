@@ -9,7 +9,7 @@ void ProxyLog::openLogFile(std::string path){
 
 void ProxyLog::writeLogFile(std::string logLine){
     pthread_mutex_lock(&lock);
-    logfile << logLine;
+    logfile << logLine << std::endl;
     pthread_mutex_unlock(&lock);
 }
 
