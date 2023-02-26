@@ -49,6 +49,10 @@ std::string HttpRequest::getRequestTime() const
     return requestTime;
 }
 
+std::string HttpRequest::getRequestLine() const{
+    return requestLine;
+}
+
 std::map<std::string, std::string> HttpRequest::getHeaderMap() const
 {
     return headerMap;
@@ -67,7 +71,7 @@ void HttpRequest::verifyBasicFormat()
 void HttpRequest::parseStartLine()
 {
     size_t requestLineEnd = httpRequest.find("\r\n"); // TODO: there is no \r\n in request header
-    std::string requestLine = httpRequest.substr(0, requestLineEnd);
+    requestLine = httpRequest.substr(0, requestLineEnd);
     std::vector<std::string> requestLineParts;
     size_t pos = 0;
     while (pos != std::string::npos)

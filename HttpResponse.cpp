@@ -5,7 +5,9 @@ HttpResponse::HttpResponse(const std::string &rawResponse) : httpResponse(rawRes
     try
     {
         // TODO: 返回的报文长度可能会有错误
+        msgContentLength = 0;
         isChunked = false;
+        msgBodySize = 0;
         parseStatusLine();
         parseHeaderFields();
         parseMsgBody();

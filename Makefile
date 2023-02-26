@@ -1,12 +1,12 @@
 CFLAGS=-std=gnu++11 -pedantic -Wall -ggdb3
-PROGS=testclient proxy_daemon
+PROGS=proxy_daemon
 # PROGS=testHttpRequest ## DEBUG HttpRequest.cpp
 # PROGS=testHttpResponse ## DEBUG HttpResponse.cpp
 OBJS=$(patsubst %,%.o,$(PROGS)) *.o
 
 all: $(PROGS)
-proxy_daemon: proxy_daemon.cpp ProxyTest.cpp Server.cpp Request.cpp httprequest.cpp client.cpp HttpResponse.cpp Cache.cpp Time.cpp
-	g++ -g $(CFLAGS) -o proxy_daemon proxy_daemon.cpp ProxyTest.cpp Server.cpp Request.cpp httprequest.cpp client.cpp HttpResponse.cpp Cache.cpp Time.cpp -lpthread
+proxy_daemon: proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp HttpResponse.cpp Time.cpp ProxyLog.cpp
+	g++ -g $(CFLAGS) -o proxy_daemon proxy_daemon.cpp Proxy.cpp Server.cpp Request.cpp httprequest.cpp client.cpp HttpResponse.cpp Time.cpp ProxyLog.cpp -lpthread
 
 testclient: testclient.cpp Server.cpp Request.cpp httprequest.cpp client.cpp
 	g++ -g $(CFLAGS) -o testclient testclient.cpp Server.cpp Request.cpp httprequest.cpp client.cpp -lpthread

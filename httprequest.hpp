@@ -24,6 +24,7 @@ private:
     std::string port;
     std::string host;
     std::string requestTime;
+    std::string requestLine;
     std::map<std::string, std::string> headerMap;
 
 public:
@@ -34,6 +35,7 @@ public:
     std::string getHost() const;
     std::string getRawRequestText() const;
     std::string getRequestTime() const;
+    std::string getRequestLine() const;
     std::map<std::string, std::string> getHeaderMap() const;
     void verifyBasicFormat();
     void parseStartLine();
