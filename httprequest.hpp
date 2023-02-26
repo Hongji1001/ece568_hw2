@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <regex>
+#include <algorithm>
 #include "Time.hpp"
 
 /* danger log */

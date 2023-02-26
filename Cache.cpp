@@ -53,8 +53,10 @@ void Cache::removeTail()
 Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
 
-void Cache::put(const HttpResponse &response, const std::string &cacheKey)
+void Cache::put(std::string rawResponse, const std::string &cacheKey)
 {
+    std::cout << rawResponse << std::endl;
+    HttpResponse response(rawResponse);
     std::cout << "成功进入缓存，缓存容量为 " << this->CAPACITY << " 当前大小为 " << this->size << std::endl;
     // 验证响应是否禁用缓存
     // 如果是协商缓存
@@ -101,10 +103,11 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
     std::cout << std::endl;
+    std::cout << response.getMsgBody() << std::endl;
     std::cout << "接收到的响应内容：" << std::endl;
     CacheNode *newCache = new CacheNode(response);
-    std::cout << response.getStartLine() << std::endl;
     std::cout << response.getHead() << std::endl;
+    std::cout << "HTTP version: " << response.getHttpVersion() << std::endl;
     std::cout << "ETag: " << newCache->ETag << std::endl;
     std::cout << "LastModified: " << newCache->LastModified << std::endl;
     std::cout << "responseTime: " << newCache->responseTime << std::endl;
@@ -117,6 +120,7 @@ void Cache::put(const HttpResponse &response, const std::string &cacheKey)
     // 加入cacheMap
     cacheMap[cacheKey] = newCache;
     std::cout << "加入缓存的响应行为：" << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
+    std::cout << "加入缓存的响应体为：" << cacheMap[cacheKey]->rawResponseBody << std::endl;
 }
 
 std::string Cache::get(const std::string &cacheKey)
@@ -171,6 +175,7 @@ bool Cache::isReqForbiden(const HttpRequest &request)
 
 bool Cache::isResForbiden(const HttpResponse &response)
 {
+    std::cout << response.getHeaderMap().count("cache-control") << std::endl;
     return !(response.getHeaderMap().count("cache-control") == 0 ||
              (response.getHeaderMap().count("cache-control") != 0 &&
               (response.getHeaderMap()["cache-control"].find("private") == std::string::npos && response.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)));
