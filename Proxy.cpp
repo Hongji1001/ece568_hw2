@@ -111,6 +111,7 @@ void Proxy::handleCONNECT(HttpRequest& newHttpRequest, void *newRequest)
     const char *ACK_msg = "HTTP/1.1 200 OK\r\n\r\n";
     // proxyLog.writeLogFile("Responding" + to_string("HTTP/1.1 200 OK")));
     sendMsgFromProxy(browser_to_proxy_fd, ACK_msg, strlen(ACK_msg));
+    proxyLog.writeLogFile(getResponseLogLine(std::string("HTTP/1.1 200 OK"), newRequest, newHttpRequest.getHost(), "from_proxy_to_browser"));
     // Then use non-blocking I/O
     // (e.g. "select") to receive and send bytes back and forth between the client/server.
     fd_set readfds;
@@ -197,7 +198,7 @@ void Proxy::handlePOST(HttpRequest& newHttpRequest, void *newRequest)
         sendFormedHttpResponse(recvHttpResponse, newHttpRequest, newRequest);
         return;
     }
-    proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost()));
+    proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser"));
     // send raw text of httpResponse to browser
     size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
@@ -246,7 +247,7 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest& newHttpRequest, void *newReq
     HttpResponse recvHttpResponse = HttpResponse(webserver_response);
     if (recvHttpResponse.checkIsChunked())
     {
-        proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost()));
+        proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser"));
         std::cout << "start sending chunked data" << std::endl;
         std::cout << recvHttpResponse.getRawResponseText().c_str() << std::endl;
         sendMsgFromProxy(((Request *)newRequest)->getClientFd(), webserver_response.c_str(), webserver_response.size());
@@ -267,6 +268,7 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest& newHttpRequest, void *newReq
         std::cout << "start sending normal GET data" << std::endl;
         size_t msgContentLength = recvHttpResponse.getContentLength();
         size_t msgBodySize = recvHttpResponse.getMsgBodySize();
+        proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser"));
         if (msgBodySize < msgContentLength)
         {
             std::cout << "The data is not fully received" << std::endl;
@@ -345,9 +347,16 @@ std::string Proxy::getRequstLogLine(const HttpRequest& newHttpRequest, void* new
     return "";
 }
 
-std::string Proxy::getResponseLogLine(const std::string &responseStartLine, void* newRequest, std::string hostname){
+std::string Proxy::getResponseLogLine(const std::string &responseStartLine, void* newRequest, std::string hostname, const std::string& mode){
+    // create a response back to browser
     std::string requestID = std::to_string(((Request*)newRequest)->getRequestID());
-    return requestID + ": " + "Received " + responseStartLine + " from " + hostname;   
+    if (mode == "from_webserver_to_browser"){
+        return requestID + ": " + "Received " + responseStartLine + " from " + hostname;   
+    }
+    if (mode == "from_proxy_to_browser"){
+        return requestID + ": " + "Responding " + responseStartLine;   
+    }
+    return "";
 }
 
 void Proxy::conditionalReq(HttpRequest& newHttpRequest, void *newRequest)
@@ -569,7 +578,7 @@ void Proxy::nonConditionalReq(HttpRequest& newHttpRequest, void *newRequest)
 
 
 void Proxy::sendFormedHttpResponse(HttpResponse& formed_response, HttpRequest& newHttpRequest, void *newRequest){
-    proxyLog.writeLogFile(getResponseLogLine(formed_response.getStartLine(), newRequest, newHttpRequest.getHost()));
+    proxyLog.writeLogFile(getResponseLogLine(formed_response.getStartLine(), newRequest, newHttpRequest.getHost(), "from_proxy_to_browser"));
     size_t raw_reponse_size = formed_response.getRawResponseText().size();
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), formed_response.getRawResponseText().c_str(), raw_reponse_size);
     return;
