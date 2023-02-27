@@ -2,9 +2,11 @@
 #define __PROXYCACHE_HPP__
 #include <map>
 #include <string>
+#include <mutex>
 #include "httprequest.hpp"
 #include "HttpResponse.hpp"
 #include "Time.hpp"
+
 #define CACHE_CAPACITY 100
 class CacheNode
 {
@@ -29,6 +31,7 @@ private:
     std::map<std::string, CacheNode *> cacheMap; // map of URI and reponse (metadata)
     CacheNode *head;
     CacheNode *tail;
+    std::mutex mtx;
     void addFromHead(CacheNode *nodeToAdd); // 新增缓存的话，将其添加到头部，并将size+1
     void moveToHead(CacheNode *nodeToMove); // 协商缓存更新etag后，要移动到链表头
     void removeTail();                      // 缓存满了后，要从链表尾部删除缓存节点
@@ -41,16 +44,19 @@ public:
     Cache(unsigned int cap);
     void put(std::string response, const std::string &cacheKey); // 放入缓存,放入链表头,加入cacheMap
 
-    std::string get(const std::string &cacheKey);                              // 从cacheMap中拿出缓存的响应,必须经过验证才行
-    bool isCached(const std::string &cacheKey);                                // 判断请求是否已经被缓存
-    bool isFull();                                                             // 判断缓存是否已经满了
-    bool isFresh(const std::string &cacheKey, const std::string &requestTime); // 检验新鲜度
-    bool isReqForbiden(const HttpRequest &request);                            // 检查请求是否禁用缓存
-    bool isResForbiden(const HttpResponse &response);                          // 检查响应是否禁用缓存
-    bool isReqMustRevalid(HttpRequest &request);                               // 检查请求是否强制验证
-    bool isResMustRevalid(const std::string &cacheKey);                        // 检查缓存是否强制验证
-    // 验证缓存是否过期,前提是cacheMap中包含cachekey
-    std::map<std::string, CacheNode *> getCacheMap() const;
+    std::string get(std::string &cacheKey);                              // 从cacheMap中拿出缓存的响应,必须经过验证才行
+    bool isCached(const std::string &cacheKey);                          // 判断请求是否已经被缓存
+    bool isFull();                                                       // 判断缓存是否已经满了
+    bool isFresh(std::string &cacheKey, const std::string &requestTime); // 检验新鲜度
+    bool isReqForbiden(const HttpRequest &request);                      // 检查请求是否禁用缓存
+    bool isResForbiden(const HttpResponse &response);                    // 检查响应是否禁用缓存
+    bool isReqMustRevalid(HttpRequest &request);                         // 检查请求是否强制验证
+    bool isResMustRevalid(std::string &cacheKey);                        // 检查缓存是否强制验证
+    std::string getCacheNodeFullResponse(std::string &cacheKey);
+    std::string getCacheNodeETag(std::string &cacheKey);
+    std::string getCacheNodeLastModified(std::string &cacheKey);
+    std::string getCacheNodeResTime(std::string &cacheKey);
+    std::string getCacheRawResHead(std::string &cacheKey);
     ~Cache();
 };
 

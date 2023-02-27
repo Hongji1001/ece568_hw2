@@ -63,6 +63,7 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
     if (isCached(cacheKey))
     {
         // 更新CacheNode的Etag和responseTime
+        std::lock_guard<std::mutex> lock(mtx);
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
         if (response.getHeaderMap().count("etag") != 0)
@@ -95,6 +96,7 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
         return;
     }
     // 如果是强制缓存
+    std::lock_guard<std::mutex> lock(mtx);
     std::cout << "初次缓存" << std::endl;
     // 缓存满了,删除最后一个结点
     if (isFull())
@@ -123,16 +125,17 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
     std::cout << "加入缓存的响应体为：" << cacheMap[cacheKey]->rawResponseBody << std::endl;
 }
 
-std::string Cache::get(const std::string &cacheKey)
+std::string Cache::get(std::string &cacheKey)
 {
-    CacheNode *res = cacheMap[cacheKey];
-    return res->getFullResponse();
+    return getCacheNodeFullResponse(cacheKey);
 }
 
 // danger log: do not take multiple response into consideration
 bool Cache::isCached(const std::string &cacheKey)
 {
-    return cacheMap.count(cacheKey) != 0;
+    std::lock_guard<std::mutex> lock(mtx);
+    bool flag = cacheMap.count(cacheKey) != 0;
+    return flag;
 }
 
 bool Cache::isFull()
@@ -140,13 +143,12 @@ bool Cache::isFull()
     return size >= CAPACITY;
 }
 
-bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
+bool Cache::isFresh(std::string &cacheKey, const std::string &requestTime)
 {
     // 不检查no-cache, no-store字段，这两个字段的检查交给proxy完成
     // isFresh方法仅查找max-age字段
-    CacheNode *resToCheck = cacheMap[cacheKey];
     // 这里需要把所有三个东西加起来再解析一遍
-    HttpResponse tempResponse = HttpResponse(resToCheck->getFullResponse());
+    HttpResponse tempResponse = HttpResponse(getCacheNodeFullResponse(cacheKey));
     // danger log: 默认响应中存在Date字段
     // Date需要转换为UTC时间
     std::string Date = Time::gmtToUTC(tempResponse.getHeaderMap()["date"]);
@@ -155,7 +157,7 @@ bool Cache::isFresh(const std::string &cacheKey, const std::string &requestTime)
     // danger log: 默认响应中不存在Age字段
     size_t age = 0;
     // std::string requestTime = resToCheck->requestTime;
-    std::string responseTime = resToCheck->responseTime;
+    std::string responseTime = getCacheNodeResTime(cacheKey);
     size_t responseDelay = Time::calTimeDiff(responseTime, requestTime);
     std::string now = Time::getLocalUTC();
     size_t residentTime = Time::calTimeDiff(now, responseTime);
@@ -188,18 +190,47 @@ bool Cache::isReqMustRevalid(HttpRequest &request)
               request.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
 }
 
-bool Cache::isResMustRevalid(const std::string &cacheKey)
+bool Cache::isResMustRevalid(std::string &cacheKey)
 {
-    CacheNode *cacheRes = cacheMap[cacheKey];
-    HttpResponse fullResponse(cacheRes->getFullResponse());
+    HttpResponse fullResponse(getCacheNodeFullResponse(cacheKey));
     return !(fullResponse.getHeaderMap().count("cache-control") == 0 ||
              (fullResponse.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
               fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
 }
 
-std::map<std::string, CacheNode *> Cache::getCacheMap() const
+std::string Cache::getCacheNodeFullResponse(std::string &cacheKey)
 {
-    return cacheMap;
+    std::lock_guard<std::mutex> lock(mtx);
+    std::string full = cacheMap[cacheKey]->getFullResponse();
+    return full;
+}
+
+std::string Cache::getCacheNodeETag(std::string &cacheKey)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::string ETag = cacheMap[cacheKey]->ETag;
+    return ETag;
+}
+
+std::string Cache::getCacheNodeLastModified(std::string &cacheKey)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::string LM = cacheMap[cacheKey]->LastModified;
+    return LM;
+}
+
+std::string Cache::getCacheNodeResTime(std::string &cacheKey)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::string RT = cacheMap[cacheKey]->responseTime;
+    return RT;
+}
+
+std::string Cache::getCacheRawResHead(std::string &cacheKey)
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    std::string RRH = cacheMap[cacheKey]->rawResponseHead;
+    return RRH;
 }
 
 Cache::~Cache()
