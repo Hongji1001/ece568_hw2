@@ -197,9 +197,9 @@ bool Cache::isResMustRevalid(const std::string &cacheKey)
               fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
 }
 
-std::map<std::string, CacheNode *> Cache::getCacheMap() const
+CacheNode *Cache::getCacheNode(std::string &cacheKey)
 {
-    return cacheMap;
+    return cacheMap[cacheKey];
 }
 
 Cache::~Cache()
