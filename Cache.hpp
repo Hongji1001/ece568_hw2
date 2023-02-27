@@ -49,8 +49,7 @@ public:
     bool isResForbiden(const HttpResponse &response);                          // 检查响应是否禁用缓存
     bool isReqMustRevalid(HttpRequest &request);                               // 检查请求是否强制验证
     bool isResMustRevalid(const std::string &cacheKey);                        // 检查缓存是否强制验证
-    // 验证缓存是否过期,前提是cacheMap中包含cachekey
-    std::map<std::string, CacheNode *> getCacheMap() const;
+    CacheNode *getCacheNode(std::string &cacheKey);
     ~Cache();
 };
 
