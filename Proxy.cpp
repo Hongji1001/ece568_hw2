@@ -279,8 +279,7 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest &newHttpRequest, void *newReq
             std::cout << "msgContentLength: " << msgContentLength << std::endl;
             std::cout << "msgBodySize: " << msgBodySize << std::endl;
             // proxyLog.writeLogFile(getResponseLogLine(HttpResponse(all_response), newRequest, newHttpRequest.getHost()));
-            std::string all_response = recvAllData(proxy_own_client, webserver_response, msgContentLength, msgBodySize);
-            return HttpResponse(all_response);
+            return recvAllData(proxy_own_client, webserver_response, msgContentLength, msgBodySize);
             // while(msgBodySize < msgContentLength){
             //     temp = proxy_own_client.recvResponse();
             //     if (temp.empty()) break;
@@ -311,7 +310,7 @@ void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
     }
 }
 
-std::string Proxy::recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize)
+HttpResponse Proxy::recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize)
 {
     std::cout << "The data is receiving continually" << std::endl;
     std::cout << "The reponse length is now:::" << server_meg.length() << std::endl;
@@ -329,9 +328,14 @@ std::string Proxy::recvAllData(Client &client, std::string server_meg, size_t co
         recv_msg_str += temp;
         msgCurSize += len;
     }
+    if (msgCurSize < contentLength){
+        // corrupted response: doesn't receive the correct length response
+        int status_code = 502;
+        return getFormedHttpResponse(status_code);
+    }
     std::cout << "The data completed receiving" << std::endl;
     std::cout << "The data completed receiving size::: " << recv_msg_str.size() << std::endl;
-    return recv_msg_str;
+    return HttpResponse(recv_msg_str);
 }
 
 void Proxy::checkCachingResponse(HttpResponse &webResponse, HttpRequest &newHttpRequest, void *newRequest)
@@ -644,10 +648,11 @@ HttpResponse Proxy::getFormedHttpResponse(const int status_code)
     else if (status_code == 502)
     {
         const char *HttpResponse_raw = "HTTP/1.1 502 Bad Gateway\r\n"
-                                       "Content-Type: text/html; charset=UTF-8\r\n"
-                                       "Date: Mon, 27 Feb 2023 02:03:59 GMT\r\n"
-                                       "Content-Length: 0\r\n"
-                                       "Sozu-Id: 01GT89SJ98RP8HXN4V5QK5B69Z\r\n\r\n";
+                    "Content-Type: text/html; charset=UTF-8\r\n"
+                    "Date: Mon, 27 Feb 2023 19:16:41 GMT\r\n"
+                    "Content-Length: 83\r\n"
+                    "Sozu-Id: 01GTA4WDEGJF478FBYEC9BMZ7W\r\n\r\n"
+                    "<html><h2>Proxy Server send you a 502 Bad Gateway(corrupted Response)</h2></html>\r\n";
         return HttpResponse(std::string(HttpResponse_raw, strlen(HttpResponse_raw)));
     }
     else

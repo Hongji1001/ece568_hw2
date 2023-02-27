@@ -23,7 +23,7 @@ public:
     static void checkCachingResponse(HttpResponse &webResponse, HttpRequest &newHttpRequest, void *newRequest);
     static void conditionalReq(HttpRequest &newHttpRequest, void *newRequest);
     static void nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest);
-    static std::string recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize);
+    static HttpResponse recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize);
     static HttpResponse sendMsgToWebserver(HttpRequest &newHttpRequest, void *newRequest);
     static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
     static void sendFormedHttpResponse(HttpResponse& formed_response, HttpRequest& newHttpRequest, void *newRequest);
