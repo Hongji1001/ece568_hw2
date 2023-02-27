@@ -2,9 +2,12 @@
 #define __PROXYCACHE_HPP__
 #include <map>
 #include <string>
+#include <mutex>
+#include <shared_mutex>
 #include "httprequest.hpp"
 #include "HttpResponse.hpp"
 #include "Time.hpp"
+
 #define CACHE_CAPACITY 100
 class CacheNode
 {
@@ -29,6 +32,7 @@ private:
     std::map<std::string, CacheNode *> cacheMap; // map of URI and reponse (metadata)
     CacheNode *head;
     CacheNode *tail;
+    mutable std::shared_timed_mutex mutex_;
     void addFromHead(CacheNode *nodeToAdd); // 新增缓存的话，将其添加到头部，并将size+1
     void moveToHead(CacheNode *nodeToMove); // 协商缓存更新etag后，要移动到链表头
     void removeTail();                      // 缓存满了后，要从链表尾部删除缓存节点
