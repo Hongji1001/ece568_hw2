@@ -3,6 +3,7 @@
 HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest)
 {
     requestTime = Time::getLocalUTC();
+    hasError = false;
     try
     {
         // TODO: 如果解析报文格式不正确应该在哪里处理，是proxy还是webserver
@@ -13,6 +14,8 @@ HttpRequest::HttpRequest(const std::string &rawRequest) : httpRequest(rawRequest
     }
     catch (const std::exception &e)
     {
+        hasError = true;
+        std::cout << "Malformed Request" << std::endl;
         // send 400 bad request response (还没实现)
     }
 
@@ -57,6 +60,12 @@ std::map<std::string, std::string> HttpRequest::getHeaderMap() const
 {
     return headerMap;
 }
+
+bool HttpRequest::getHasError() const
+{
+    return hasError;
+}
+
 
 void HttpRequest::verifyBasicFormat()
 {

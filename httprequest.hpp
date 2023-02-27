@@ -18,6 +18,7 @@
 class HttpRequest
 {
 private:
+    bool hasError;  // 在initialization list里面初始化false会warning
     std::string httpRequest;
     std::string method;
     std::string requestTarget;
@@ -37,6 +38,7 @@ public:
     std::string getRawRequestText() const;
     std::string getRequestTime() const;
     std::string getRequestLine() const;
+    bool getHasError() const;
     std::map<std::string, std::string> getHeaderMap() const;
     void verifyBasicFormat();
     void parseStartLine();

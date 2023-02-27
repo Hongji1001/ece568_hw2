@@ -18,15 +18,10 @@ void Proxy::startRun()
     while (true)
     {
         int client_connection_fd = server.tryAccept();
-        if (client_connection_fd == -1)
+        if (client_connection_fd == -1 || server.getErrorSign() == -1)
         {
-            std::cout << "fail to accept" << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        if (server.getErrorSign() == -1)
-        {
-            std::cout << "can not init as a server";
-            exit(EXIT_FAILURE);
+            std::cout << "fail to accept this request" << std::endl;
+            continue;
         }
         std::cout << "has accept" << std::endl;
         // recv msg
@@ -46,18 +41,27 @@ void *Proxy::handle(void *newRequest)
     if (rawRequestText.empty() || rawRequestText == "\r" || rawRequestText == "\n" || rawRequestText == "\r\n")
         return nullptr;
     HttpRequest newHttpRequest = HttpRequest(rawRequestText);
+    std::cout << getRequstLogLine(newHttpRequest, newRequest, std::string("from_browser_to_proxy")) << std::endl;
+    proxyLog.writeLogFile(getRequstLogLine(newHttpRequest, newRequest, std::string("from_browser_to_proxy")));
+    if (newHttpRequest.getHasError()){
+        // if the HttpRequest is malformed request
+        int error_status_code = 400;;
+        HttpResponse formed_response = getFormedHttpResponse(error_status_code);
+        sendFormedHttpResponse(formed_response, newHttpRequest, newRequest);
+        close(((Request *)newRequest)->getClientFd());
+        return nullptr;
+    }
+
+    
     // start to verify http request
     std::cout << newHttpRequest.getHost() << std::endl;
     std::cout << newHttpRequest.getMethod() << std::endl;
     std::cout << newHttpRequest.getPort() << std::endl;
     std::cout << newHttpRequest.getRequestTarget() << std::endl;
-    std::cout << getRequstLogLine(newHttpRequest, newRequest, std::string("from_browser_to_proxy")) << std::endl;
-    proxyLog.writeLogFile(getRequstLogLine(newHttpRequest, newRequest, std::string("from_browser_to_proxy")));
     // handle CONNECT Request
     if (newHttpRequest.getMethod() == "CONNECT")
     {
         handleCONNECT(newHttpRequest, newRequest);
-        proxyLog.writeLogFile(std::string("Tunnel closed"));
         return nullptr;
     }
     else if (newHttpRequest.getMethod() == "POST")
@@ -80,7 +84,7 @@ void *Proxy::handle(void *newRequest)
     return nullptr;
 }
 
-void Proxy::handleCONNECT(HttpRequest newHttpRequest, void *newRequest)
+void Proxy::handleCONNECT(HttpRequest& newHttpRequest, void *newRequest)
 {
     // Receive HTTP CONNECT request from client
 
@@ -91,9 +95,15 @@ void Proxy::handleCONNECT(HttpRequest newHttpRequest, void *newRequest)
     std::cout << webserver_port_num << std::endl; // 确定port是443
     std::cout << "newHttpRequest.getHost()" << std::endl;
     std::cout << newHttpRequest.getHost() << std::endl;
-
     // Make a new socket, connect it to the target server ip & port (make sure port is 443 for CONNECT)
     Client proxy_own_client = Client(webserver_port_num, newHttpRequest.getHost());
+    if (proxy_own_client.getHasError()){
+        // 如果client连接错误马上返回一个400 bad
+        int error_status_code = 400;;
+        HttpResponse formed_response = getFormedHttpResponse(error_status_code);
+        sendFormedHttpResponse(formed_response, newHttpRequest, newRequest);
+        return;
+    }
     int proxy_to_webserver_fd = proxy_own_client.getSockfd();
     int browser_to_proxy_fd = ((Request *)newRequest)->getClientFd();
 
@@ -175,17 +185,19 @@ void Proxy::handleCONNECT(HttpRequest newHttpRequest, void *newRequest)
             buff.clear();
         }
     }
-
-    // Keep this connection open until one side closes it (i.e. a 'recv' call returns with 0 bytes).
-    // close(proxy_to_webserver_fd);
-    close(browser_to_proxy_fd);
+    close(((Request *)newRequest)->getClientFd());
+    proxyLog.writeLogFile(std::string("Tunnel closed"));
 }
 
-void Proxy::handlePOST(HttpRequest newHttpRequest, void *newRequest)
+void Proxy::handlePOST(HttpRequest& newHttpRequest, void *newRequest)
 {
     // send request to webserver and get HttpResponse
     HttpResponse recvHttpResponse = sendMsgToWebserver(newHttpRequest, newRequest);
-    proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse, newRequest, newHttpRequest.getHost()));
+    if (recvHttpResponse.getStatusCode() == "400"){
+        sendFormedHttpResponse(recvHttpResponse, newHttpRequest, newRequest);
+        return;
+    }
+    proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost()));
     // send raw text of httpResponse to browser
     size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
@@ -193,7 +205,7 @@ void Proxy::handlePOST(HttpRequest newHttpRequest, void *newRequest)
     return;
 }
 
-void Proxy::handleGET(HttpRequest newHttpRequest, void *newRequest)
+void Proxy::handleGET(HttpRequest& newHttpRequest, void *newRequest)
 {
     if (newHttpRequest.getHeaderMap().count("if-none-match") != 0 || newHttpRequest.getHeaderMap().count("if-modified-since") != 0)
     {
@@ -208,7 +220,7 @@ void Proxy::handleGET(HttpRequest newHttpRequest, void *newRequest)
     close(((Request *)newRequest)->getClientFd());
 }
 
-HttpResponse Proxy::sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequest)
+HttpResponse Proxy::sendMsgToWebserver(HttpRequest& newHttpRequest, void *newRequest)
 {
     // send request to webserver first and get response back
     // get port and hostname of webserver
@@ -218,6 +230,11 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequ
     std::cout << "newHttpRequest.getHost()" << std::endl;
     std::cout << newHttpRequest.getHost() << std::endl;
     Client proxy_own_client = Client(webserver_port_num, newHttpRequest.getHost());
+    if (proxy_own_client.getHasError()){
+        // 如果client连接错误马上返回一个400 bad
+        int status_code = 400;
+        return getFormedHttpResponse(status_code);
+    }
     // send msg to webserver
     size_t http_raw_text_size = newHttpRequest.getRawRequestText().size();
     proxy_own_client.sendRequest(newHttpRequest.getRawRequestText().c_str(), http_raw_text_size);
@@ -229,9 +246,8 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest newHttpRequest, void *newRequ
     HttpResponse recvHttpResponse = HttpResponse(webserver_response);
     if (recvHttpResponse.checkIsChunked())
     {
-        proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse, newRequest, newHttpRequest.getHost()));
+        proxyLog.writeLogFile(getResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost()));
         std::cout << "start sending chunked data" << std::endl;
-        size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
         std::cout << recvHttpResponse.getRawResponseText().c_str() << std::endl;
         sendMsgFromProxy(((Request *)newRequest)->getClientFd(), webserver_response.c_str(), webserver_response.size());
         // continue to recv and send
@@ -312,12 +328,14 @@ std::string Proxy::recvAllData(Client &client, std::string server_meg, size_t co
     return recv_msg_str;
 }
 
-std::string Proxy::getRequstLogLine(HttpRequest newHttpRequest, void* newRequest, std::string mode){
+std::string Proxy::getRequstLogLine(const HttpRequest& newHttpRequest, void* newRequest, std::string mode){
     std::string requestID = std::to_string(((Request*)newRequest)->getRequestID());
     std::string requestStartLine = newHttpRequest.getRequestLine();
     if (mode == "from_browser_to_proxy"){
         std::string requestIP = ((Request*)newRequest)->getClientIP();
         std::string requestTime = Time::getLocalUTC();
+        requestTime.erase(std::remove(requestTime.begin(), requestTime.end(), '\n'),
+            requestTime.end()); // trim \n
         return requestID + ": " + requestStartLine + " from " + requestIP + " @ " + requestTime;
     } 
     if (mode == "from_proxy_to_webserver"){
@@ -327,13 +345,12 @@ std::string Proxy::getRequstLogLine(HttpRequest newHttpRequest, void* newRequest
     return "";
 }
 
-std::string Proxy::getResponseLogLine(HttpResponse webserver_response, void* newRequest, std::string hostname){
+std::string Proxy::getResponseLogLine(const std::string &responseStartLine, void* newRequest, std::string hostname){
     std::string requestID = std::to_string(((Request*)newRequest)->getRequestID());
-    std::string responseStartLine = webserver_response.getStartLine();
     return requestID + ": " + "Received " + responseStartLine + " from " + hostname;   
 }
 
-void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest)
+void Proxy::conditionalReq(HttpRequest& newHttpRequest, void *newRequest)
 {
     int sockfd = ((Request *)newRequest)->getClientFd();
     std::string cacheKey = newHttpRequest.getRequestTarget();
@@ -390,6 +407,10 @@ void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest)
     {
         std::cout << "代理中没有缓存 ";
         HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
+        // if (webResponse.getStatusCode() == "400"){
+        //     sendFormedHttpResponse(webResponse, newHttpRequest, newRequest);
+        //     return;
+        // }
         if(webResponse.checkIsChunked()){
             return;
         }
@@ -421,7 +442,7 @@ void Proxy::conditionalReq(HttpRequest newHttpRequest, void *newRequest)
     }
 }
 
-void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest)
+void Proxy::nonConditionalReq(HttpRequest& newHttpRequest, void *newRequest)
 {
     std::cout << "进入非条件请求验证" << std::endl;
     int sockfd = ((Request *)newRequest)->getClientFd();
@@ -546,6 +567,37 @@ void Proxy::nonConditionalReq(HttpRequest newHttpRequest, void *newRequest)
     }
 }
 
+
+void Proxy::sendFormedHttpResponse(HttpResponse& formed_response, HttpRequest& newHttpRequest, void *newRequest){
+    proxyLog.writeLogFile(getResponseLogLine(formed_response.getStartLine(), newRequest, newHttpRequest.getHost()));
+    size_t raw_reponse_size = formed_response.getRawResponseText().size();
+    sendMsgFromProxy(((Request *)newRequest)->getClientFd(), formed_response.getRawResponseText().c_str(), raw_reponse_size);
+    return;
+}
+
+HttpResponse Proxy::getFormedHttpResponse(const int status_code){
+    if (status_code == 400){
+       const char* HttpResponse_raw =  "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n"
+            "Date: Mon, 27 Feb 2023 01:51:07 GMT\r\n"
+            "Content-Length: 0\r\n"
+            "Sozu-Id: 01GT891WCRCN6W6SE1J6QP6J5F\r\n\r\n";
+        return HttpResponse(std::string(HttpResponse_raw, strlen(HttpResponse_raw)));
+    }
+    else if (status_code == 502){
+       const char* HttpResponse_raw =  "HTTP/1.1 502 Bad Gateway\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n"
+            "Date: Mon, 27 Feb 2023 02:03:59 GMT\r\n"
+            "Content-Length: 0\r\n"
+            "Sozu-Id: 01GT89SJ98RP8HXN4V5QK5B69Z\r\n\r\n";
+        return HttpResponse(std::string(HttpResponse_raw, strlen(HttpResponse_raw)));
+    }
+    else {
+        exit(EXIT_FAILURE);
+        std::cout << "wrong input status code" << std::endl;
+    }
+
+}
 // void Proxy::validation(HttpRequest &request, int sockfd)
 // {
 //     // 验证是否禁用代理缓存 未禁用的情况：1.没有cache-control字段 2.有cache-control字段但没有private,no-store字段中的任意一个

@@ -5,8 +5,6 @@ ProxyLog Proxy::proxyLog;
 
 int main()
 {
-    // TODO: ADD daemon
-    // LOG(INFO)<<"testDaemon start";
     // if(daemon(0, 0) == -1){
     //     std::cout<<"error\n"<<std::endl;
     //     exit(-1);

@@ -122,6 +122,11 @@ std::string Client::recvResponse()
     return std::string(buf, numBytes);
 }
 
+
+int Client::getHasError() const{
+    return hasError;
+}
+
 Client::~Client()
 {
     try
