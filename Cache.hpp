@@ -3,8 +3,7 @@
 #include <map>
 #include <string>
 #include <mutex>
-#include "httprequest.hpp"
-#include "HttpResponse.hpp"
+#include "ProxyLog.hpp"
 #include "Time.hpp"
 
 #define CACHE_CAPACITY 100
