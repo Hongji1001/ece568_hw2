@@ -28,7 +28,7 @@ int Server::setUpStruct(){
   if (status != 0) {
     // "Error: cannot get address info for host"
     return -1;
-  } //if
+  }
   return status;
 }
 
@@ -39,7 +39,7 @@ int Server::initSocketFd(){
   if (socket_fd == -1) {
     // "Error: cannot create socket" << endl;
     return -1;
-  } //if
+  }
   return socket_fd;
 }
 
@@ -51,7 +51,7 @@ int Server::tryBind(){
   if (status == -1) {
     // "Error: cannot bind socket" << endl;
     return -1;
-  } //if
+  }
   return status;
 }
 
@@ -61,7 +61,7 @@ int Server::startListen(){
   if (status == -1) {
     // "Error: cannot listen on socket" 
     return -1;
-  } //if
+  }
   freeaddrinfo(host_info_list);
   return status;
 }
@@ -74,7 +74,7 @@ int Server::tryAccept(){
     if (client_connection_fd == -1) {
       // "Error: cannot accept connection on socket"
       return -1;
-    } //if
+    }
     return client_connection_fd;
 }
 
@@ -83,7 +83,6 @@ int Server::getErrorSign(){
 }
 
 std::string Server::recvData(int flag){
-  // TODO: select function
   char recvbuff[MAX_TCP_PACKET_SIZE];
   int numbytes;
   if ((numbytes = recv(client_connection_fd, recvbuff, MAX_TCP_PACKET_SIZE, flag)) == -1) {

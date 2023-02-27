@@ -30,6 +30,7 @@ public:
     void createConnect();
     void closeClient();
     void sendRequest(const void *msg, const size_t size);
+    int getHasError() const;
     std::string recvResponse();
     ~Client();
 };
