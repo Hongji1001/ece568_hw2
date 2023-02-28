@@ -1,0 +1,143 @@
+---------------------      CONNECT       ----------------------------------------------------
+
+(1) CONNECT(youtube.com)
+
+49: "CONNECT www.youtube.com:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:33:23 2023
+
+49: Responding "HTTP/1.1 200 OK"
+
+49: Tunnel closed
+
+---------------------      POST       ----------------------------------------------------
+
+(1) POST(http://httpbin.org/post)
+
+39: "POST http://httpbin.org/post HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:36:16 2023
+
+39: Requesting "POST http://httpbin.org/post HTTP/1.1" from httpbin.org
+
+39: Received "HTTP/1.1 200 OK" from httpbin.org
+
+---------------------      GET       ----------------------------------------------------
+
+(1) GET chunked data (http://www.httpwatch.com/httpgallery/chunked/chunkedimage.aspx) both https and http
+
+39: "GET http://www.httpwatch.com/httpgallery/chunked/chunkedimage.aspx HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:39:10 2023
+
+39: not in cache
+
+39: Requesting "GET http://www.httpwatch.com/httpgallery/chunked/chunkedimage.aspx HTTP/1.1" from www.httpwatch.com
+
+39: Received "HTTP/1.1 200 OK" from www.httpwatch.com
+
+39: not cacheable beacause response is private and/or no-store and/or chunked data
+
+
+
+(2) GET 301 Moved Permanently(http://www.artsci.utoronto.ca/futurestudents)
+
+39: "GET http://www.artsci.utoronto.ca/futurestudents HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:41:36 2023
+
+39: not in cache
+
+39: Requesting "GET http://www.artsci.utoronto.ca/futurestudents HTTP/1.1" from www.artsci.utoronto.ca
+
+39: Received "HTTP/1.1 301 Moved Permanently" from www.artsci.utoronto.ca
+
+40: "CONNECT www.artsci.utoronto.ca:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:41:36 2023
+
+40: Responding "HTTP/1.1 200 OK"
+
+
+
+(3) GET malformed request(error host name)
+
+39: "GET http://ww.httpwatch.com/httpgallery/errors/images/imagea.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:43:49 2023
+
+39: not in cache
+
+39: Responding "HTTP/1.1 400 Bad Request"
+
+
+
+(4) GET malformed request(error port) invalid port 81 http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif
+
+0: "GET http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:54:25 2023
+
+0: not in cache
+
+0: Requesting "GET http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif HTTP/1.1" from www.httpwatch.com
+
+1: "CONNECT mozilla.cloudflare-dns.com:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:56:20 2023
+
+1: Responding "HTTP/1.1 200 OK"
+
+0: Responding "HTTP/1.1 400 Bad Request"
+
+(5) GET in cache, valid 304
+
+38: "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:02:34 2023
+
+38: in cache, valid
+
+38: Responding "HTTP/1.1 304 Not Modified"
+
+
+
+(6) GET cached, but requires re-validation
+
+119: "GET http://www.httpwatch.com/httpgallery/ HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:05:07 2023
+
+119: not in cache
+
+119: Requesting "GET http://www.httpwatch.com/httpgallery/ HTTP/1.1" from www.httpwatch.com
+
+119: Received "HTTP/1.1 200 OK" from www.httpwatch.com
+
+119: cached, but requires re-validation
+
+119: Responding "HTTP/1.1 200 OK"
+
+(7) GET cached, expires at 
+
+183: Requesting "GET http://info.cern.ch/ HTTP/1.1" from info.cern.ch
+
+183: Received "HTTP/1.1 200 OK" from info.cern.ch
+
+183: cached, expires at Tue Feb 28 20:18:09 2023
+
+183: Responding "HTTP/1.1 200 OK"
+
+(8) GET in cache, valid
+
+277: "GET http://info.cern.ch/hypertext/WWW/TheProject.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:12:46 2023
+
+278: "CONNECT optimizationguide-pa.googleapis.com:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:12:46 2023
+
+277: in cache, valid
+
+277: Responding "HTTP/1.1 200 OK"
+
+
+(9) GET http://detectportal.firefox.com/success.txt?ipv6 HTTP/1.1
+cacheable / public / must-revalidate / max-age=0
+
+
+(10) GET http://www.httpwatch.com/httpgallery/errors/images/imagec/ HTTP/1.1
+not cacheable / private
+
+
+(11) GET http://info.cern.ch/ HTTP/1.1" @ Tue Feb 28 19:24:41 2023
+cacheable / expires at ue Feb 28 19:34:41 2023
+
+
+(12) GET http://www.httpwatch.com/httpgallery/caching/imageA/ HTTP/1.1
+not cacheable / no-cache / no-store 
+
+
+(13) GET http://www.httpwatch.com/favicon.ico?v1 HTTP/1.1
+not in cache / move permanently
+
+
+(14) GET http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif HTTP/1.1
+bad request

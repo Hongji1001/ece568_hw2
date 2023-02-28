@@ -85,9 +85,11 @@ void ProxyLog::writeReqCacheLogLine(HttpRequest &newHttpRequest, void *newReques
             size_t maxAge = temp.getMaxAge();
             struct tm gmt_struct;
             strptime(Date.c_str(), "%a, %d %b %Y %T %Z", &gmt_struct);
-
             time_t gmt_time = mktime(&gmt_struct);
-            gmt_time += maxAge;
+            std::tm *utc_time = std::gmtime(&gmt_time);
+            std::time_t time2 = std::mktime(utc_time);
+            std::time_t offset = time2 - gmt_time;           
+            gmt_time = gmt_time - offset + maxAge;
             struct tm *utc_struct = gmtime(&gmt_time);
             std::string UTCTime(asctime(utc_struct));
             EXPIREDTIME = UTCTime;
@@ -136,9 +138,11 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
             size_t maxAge = webResponse.getMaxAge();
             struct tm gmt_struct;
             strptime(Date.c_str(), "%a, %d %b %Y %T %Z", &gmt_struct);
-
             time_t gmt_time = mktime(&gmt_struct);
-            gmt_time += maxAge;
+            std::tm *utc_time = std::gmtime(&gmt_time);
+            std::time_t time2 = std::mktime(utc_time);
+            std::time_t offset = time2 - gmt_time;           
+            gmt_time = gmt_time - offset + maxAge;
             struct tm *utc_struct = gmtime(&gmt_time);
             std::string UTCTime(asctime(utc_struct));
             EXPIREDTIME = UTCTime;

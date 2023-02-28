@@ -14,9 +14,7 @@ std::string Time::gmtToUTC(const std::string &gmtTime)
     strptime(gmtTime.c_str(), "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
     // covert to UTC time
-    std::time_t time = std::mktime(&tm);
-    std::tm *utc_tm = std::gmtime(&time);
-    std::string UTCTime(asctime(utc_tm));
+    std::string UTCTime(asctime(&tm));
     return UTCTime;
 }
 

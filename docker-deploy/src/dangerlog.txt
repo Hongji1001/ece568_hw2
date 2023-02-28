@@ -1,0 +1,10 @@
+1. Expire field is not considered, because the expire field is the standard in http1.0, in the new standard http1.1 with cache-control control caching, so use the cache-control caching policy specified in the cache-control.
+
+2. The response received must have a Date field by default, and according to the RFC, most of the time it is necessary to include a Date field in the response to determine if the cache is fresh and to calculate the age.
+
+3. The Age field in the response is not considered, and the age field is defaulted to 0 when determining the freshness of the cache.
+
+4. Only basic validation of the request format is performed, specifically only the following: whether the request is formatted into request lines, request headers, request message bodies and whether the request lines follow the method SP URI SP httpversion format.
+
+5. If the response does not have a cache-control field, or if the proxy cache is allowed but no max-age field is provided, the default cache of ten minutes in the proxy service will be used.
+
