@@ -10,7 +10,7 @@ void Proxy::startRun()
     if (server.getErrorSign() == -1)
     {
         // how to exit gracefully return nullptr
-        std::cout << "can not init as a server";
+        std::cerr << "can not init as a server" << std::endl;
         throw std::exception();
     }
     std::cout << "inited server " << std::endl;
@@ -31,7 +31,7 @@ void Proxy::startRun()
         Request *newRequest = new Request(msg, client_connection_fd);
         pthread_t thread;
         pthread_create(&thread, NULL, handle, newRequest);
-    }
+    }  
 }
 
 void *Proxy::handle(void *newRequest)

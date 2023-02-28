@@ -34,13 +34,13 @@ void ProxyLog::writeRequstLogLine(const HttpRequest &newHttpRequest, void *newRe
         std::string requestTime = Time::getLocalUTC();
         requestTime.erase(std::remove(requestTime.begin(), requestTime.end(), '\n'),
                           requestTime.end()); // trim \n
-        writeLogFile(requestID + ": " + requestStartLine + " from " + requestIP + " @ " + requestTime);
+        writeLogFile(requestID + ": \"" + requestStartLine + "\" from " + requestIP + " @ " + requestTime);
         return;
     }
     if (mode == "from_proxy_to_webserver")
     {
         std::string requestHost = newHttpRequest.getHost();
-        writeLogFile(requestID + ": " + "Requesting " + requestStartLine + " from " + requestHost);
+        writeLogFile(requestID + ": " + "Requesting \"" + requestStartLine + "\" from " + requestHost);
         return;
     }
 }
@@ -51,12 +51,12 @@ void ProxyLog::writeResponseLogLine(const std::string &responseStartLine, void *
     std::string requestID = std::to_string(((Request *)newRequest)->getRequestID());
     if (mode == "from_webserver_to_browser")
     {
-        writeLogFile(requestID + ": " + "Received " + responseStartLine + " from " + hostname);
+        writeLogFile(requestID + ": " + "Received \"" + responseStartLine + "\" from " + hostname);
         return;
     }
     if (mode == "from_proxy_to_browser")
     {
-        writeLogFile(requestID + ": " + "Responding " + responseStartLine);
+        writeLogFile(requestID + ": " + "Responding \"" + responseStartLine + "\"");
         return;
     }
 }

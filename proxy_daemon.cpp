@@ -9,15 +9,18 @@ int main()
     //     std::cout<<"error\n"<<std::endl;
     //     exit(-1);
     // }
+    Proxy *proxy_daemon = nullptr;
     try
     {
-        Proxy *proxy_daemon = new Proxy(12345);
+        proxy_daemon = new Proxy(12345);
         proxy_daemon->startRun();
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
+    delete proxy_daemon;
+    // Proxy::proxyLog.closeLogFile();
     std::cout << "exit" << std::endl;
     return EXIT_SUCCESS;
 }
