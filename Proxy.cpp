@@ -11,7 +11,7 @@ void Proxy::startRun()
     {
         // how to exit gracefully return nullptr
         std::cout << "can not init as a server";
-        exit(EXIT_FAILURE);
+        throw std::exception();
     }
     std::cout << "inited server " << std::endl;
     // start getting request from client
