@@ -6,7 +6,7 @@
 #include "ProxyLog.hpp"
 #include "Time.hpp"
 
-#define CACHE_CAPACITY 100
+#define CACHE_CAPACITY 10
 class CacheNode
 {
 public:

@@ -49,13 +49,17 @@ void Cache::removeTail()
     }
     tail = tail->prev;
     delete tempTail;
+    std::cout << "start to reduce size" << std::endl;
     size--;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::cout << "start to remove" << std::endl;
+    // std::lock_guard<std::mutex> lock(mtx);
+    std::cout << "start to lock" << std::endl;
     auto it = cacheMap.find(cacheKey);
     if (it != cacheMap.end())
     {
         cacheMap.erase(it);
     }
+    std::cout << "unlock" << std::endl;
 }
 Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
@@ -103,11 +107,13 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
         return;
     }
     // 如果是强制缓存
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::cout << "初次缓存" << std::endl;
     // 缓存满了,删除最后一个结点
     if (isFull())
     {
+        std::cout << "enter into remove tail func" << std::endl;
+        if (tail == NULL) std::cout << "tail pointer is NULL and enter to remove tail" << std::endl;
         removeTail();
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
