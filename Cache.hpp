@@ -51,6 +51,7 @@ public:
     bool isResForbiden(const HttpResponse &response);                    // 检查响应是否禁用缓存
     bool isReqMustRevalid(HttpRequest &request);                         // 检查请求是否强制验证
     bool isResMustRevalid(std::string &cacheKey);                        // 检查缓存是否强制验证
+    bool isResMustRevalid(HttpResponse &fullResponse);
     std::string getCacheNodeFullResponse(std::string &cacheKey);
     std::string getCacheNodeETag(std::string &cacheKey);
     std::string getCacheNodeLastModified(std::string &cacheKey);
