@@ -85,7 +85,7 @@ void Client::sendRequest(const void *msg, const size_t size)
     int recvBytes = 0;
     while ((numBytes < size))
     {
-        if ((recvBytes = send(sockfd, msg, size, 0)) == -1)
+        if ((recvBytes = send(sockfd, msg, size, MSG_NOSIGNAL)) == -1)
         {
             perror("client send");
             throw std::exception();

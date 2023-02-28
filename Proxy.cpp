@@ -201,7 +201,7 @@ void Proxy::handlePOST(HttpRequest &newHttpRequest, void *newRequest)
         sendFormedHttpResponse(recvHttpResponse, newHttpRequest, newRequest);
         return;
     }
-    proxyLog.writeResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser");
+    // proxyLog.writeResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser"); TO DELETE
     // send raw text of httpResponse to browser
     size_t raw_reponse_size = recvHttpResponse.getRawResponseText().size();
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), recvHttpResponse.getRawResponseText().c_str(), raw_reponse_size);
@@ -251,10 +251,10 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest &newHttpRequest, void *newReq
     HttpResponse recvHttpResponse = HttpResponse(webserver_response);
     if (recvHttpResponse.checkIsChunked())
     {
-        proxyLog.writeResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser");
         std::cout << "start sending chunked data" << std::endl;
         std::cout << recvHttpResponse.getRawResponseText().c_str() << std::endl;
         sendMsgFromProxy(((Request *)newRequest)->getClientFd(), webserver_response.c_str(), webserver_response.size());
+        proxyLog.writeResponseLogLine(recvHttpResponse.getStartLine(), newRequest, newHttpRequest.getHost(), "from_webserver_to_browser");
         // continue to recv and send
         while (true)
         {
@@ -301,7 +301,7 @@ void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
     int recvBytes = 0;
     while ((numBytes < size))
     {
-        if ((recvBytes = send(sockfd, msg, size, 0)) == -1)
+        if ((recvBytes = send(sockfd, msg, size, MSG_NOSIGNAL)) == -1)
         {
             perror("client send");
             throw std::exception();
@@ -394,6 +394,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                 std::string newResponse = "HTTP/1.1 304 Not Modified\r\n" + cache.getCacheRawResHead(cacheKey) + "\r\n";
                 std::cout << "将304响应返回浏览器 " << std::endl;
                 sendMsgFromProxy(sockfd, newResponse.c_str(), newResponse.size());
+                proxyLog.writeResponseLogLine(std::string("HTTP/1.1 304 Not Modified"), newRequest, newHttpRequest.getHost(), "from_proxy_to_browser");
             }
             else
             {
@@ -417,6 +418,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             }
             if (webResponse.checkIsChunked())
             {
+                proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                 return;
             }
             if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
@@ -461,6 +463,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
         }
         if (webResponse.checkIsChunked())
         {
+             proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
             return;
         }
         if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
@@ -531,6 +534,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                 }
                 if (webResponse.checkIsChunked())
                 {
+                     proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                     return;
                 }
                 if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
@@ -588,6 +592,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                     }
                     if (webResponse.checkIsChunked())
                     {
+                        proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                         return;
                     }
                     if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
@@ -634,6 +639,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             }
             if (webResponse.checkIsChunked())
             {
+                 proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                 return;
             }
             if (webResponse.getStatusCode() != "304" && webResponse.getStatusCode() != "200")
@@ -674,6 +680,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
         HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
         if (webResponse.checkIsChunked())
         {
+             proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
             return;
         }
         std::cout << "直接发送响应返回浏览器 " << std::endl;

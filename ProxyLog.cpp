@@ -94,7 +94,7 @@ void ProxyLog::writeReqCacheLogLine(HttpRequest &newHttpRequest, void *newReques
             EXPIREDTIME.erase(std::remove(EXPIREDTIME.begin(), EXPIREDTIME.end(), '\n'),
                               EXPIREDTIME.end());
         }
-        writeLogFile(requestID + ": in cache, but expire at " + EXPIREDTIME);
+        writeLogFile(requestID + ": in cache, but expired at " + EXPIREDTIME);
         return;
     }
     if (mode == "requires validation")
@@ -118,7 +118,7 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
     std::string requestID = std::to_string(((Request *)newRequest)->getRequestID());
     if (mode == "not cacheable")
     {
-        writeLogFile(requestID + ": not cacheable beacause response is private and/or no-store and/or chumked data");
+        writeLogFile(requestID + ": not cacheable beacause response is private and/or no-store and/or chunked data");
         return;
     }
     if (mode == "cached expired")

@@ -95,7 +95,7 @@ std::string Server::recvData(int flag){
 
 void Server::sendData(void* data, size_t dataSize, int flag){
   int status;
-  status = send(client_connection_fd, data, dataSize, flag); 
+  status = send(client_connection_fd, data, dataSize, MSG_NOSIGNAL); 
   if (status == -1){
     hasError = 1;
   }
