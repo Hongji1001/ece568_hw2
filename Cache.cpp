@@ -193,7 +193,8 @@ bool Cache::isReqMustRevalid(HttpRequest &request)
 {
     return !(request.getHeaderMap().count("cache-control") == 0 ||
              (request.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
-              request.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
+              request.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos &&
+              request.getHeaderMap()["cache-control"].find("max-age=0") == std::string::npos));
 }
 
 bool Cache::isResMustRevalid(std::string &cacheKey)
@@ -201,7 +202,8 @@ bool Cache::isResMustRevalid(std::string &cacheKey)
     HttpResponse fullResponse(getCacheNodeFullResponse(cacheKey));
     return !(fullResponse.getHeaderMap().count("cache-control") == 0 ||
              (fullResponse.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
-              fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
+              fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos &&
+              fullResponse.getHeaderMap()["cache-control"].find("max-age=0") == std::string::npos));
 }
 
 bool Cache::isResMustRevalid(HttpResponse &fullResponse)
