@@ -5,7 +5,7 @@ ProxyLog Proxy::proxyLog;
 
 int main()
 {
-    // if(daemon(0, 0) == -1){
+    // if(daemon(1, 0) == -1){
     //     std::cout<<"error\n"<<std::endl;
     //     exit(-1);
     // }
