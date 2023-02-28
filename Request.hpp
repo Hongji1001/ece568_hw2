@@ -31,7 +31,7 @@ class Request{
             struct sockaddr_storage socket_addr;
             socklen_t socket_addr_len = sizeof(socket_addr);
             char ipAddress[INET6_ADDRSTRLEN] = {0};
-            getsockname(socket_fd, (struct sockaddr*)&socket_addr, &socket_addr_len);//获取sockfd表示的连接上的本地地址
+            getpeername(socket_fd, (struct sockaddr*)&socket_addr, &socket_addr_len);//获取sockfd表示的连接上的本地地址
             inet_ntop(socket_addr.ss_family,
                     get_in_addr((struct sockaddr *)&socket_addr),
                     ipAddress, sizeof ipAddress);
