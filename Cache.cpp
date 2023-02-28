@@ -42,6 +42,7 @@ void Cache::removeTail()
         return;
     }
     CacheNode *tempTail = tail;
+    std::string cacheKey = tempTail->cacheKey;
     if (head == tail)
     {
         head = NULL;
@@ -49,6 +50,12 @@ void Cache::removeTail()
     tail = tail->prev;
     delete tempTail;
     size--;
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = cacheMap.find(cacheKey);
+    if (it != cacheMap.end())
+    {
+        cacheMap.erase(it);
+    }
 }
 Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
@@ -107,7 +114,7 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
     std::cout << std::endl;
     std::cout << response.getMsgBody() << std::endl;
     std::cout << "接收到的响应内容：" << std::endl;
-    CacheNode *newCache = new CacheNode(response);
+    CacheNode *newCache = new CacheNode(response, cacheKey);
     std::cout << response.getHead() << std::endl;
     std::cout << "HTTP version: " << response.getHttpVersion() << std::endl;
     std::cout << "ETag: " << newCache->ETag << std::endl;
@@ -248,11 +255,12 @@ Cache::~Cache()
     std::cout << "缓存已释放" << std::endl;
 }
 
-CacheNode::CacheNode(const HttpResponse &response)
+CacheNode::CacheNode(const HttpResponse &response, const std::string &cacheKey)
 {
     rawResponseStartLine = response.getStartLine();
     rawResponseHead = response.getHead();
     rawResponseBody = response.getMsgBody();
+    this->cacheKey = cacheKey;
     if (response.getHeaderMap().count("etag") != 0)
     {
         ETag = response.getHeaderMap()["etag"];

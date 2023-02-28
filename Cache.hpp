@@ -14,11 +14,12 @@ public:
     std::string rawResponseHead; // max-age, raw reponse, date/age_value can be parsed from it
     std::string rawResponseBody;
     std::string responseTime;
+    std::string cacheKey;
     std::string ETag;
     std::string LastModified;
     CacheNode *prev;
     CacheNode *next;
-    CacheNode(const HttpResponse &response); // 放入响应体，同时自动记录放入响应体的时间
+    CacheNode(const HttpResponse &response, const std::string &cacheKey); // 放入响应体，同时自动记录放入响应体的时间
     std::string getFullResponse();
 };
 

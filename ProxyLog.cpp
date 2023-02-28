@@ -76,6 +76,8 @@ void ProxyLog::writeReqCacheLogLine(HttpRequest &newHttpRequest, void *newReques
         if (temp.getHeaderMap().count("expires"))
         {
             EXPIREDTIME = Time::gmtToUTC(temp.getHeaderMap()["expires"]);
+            EXPIREDTIME.erase(std::remove(EXPIREDTIME.begin(), EXPIREDTIME.end(), '\n'),
+                              EXPIREDTIME.end());
         }
         else
         {
@@ -89,6 +91,8 @@ void ProxyLog::writeReqCacheLogLine(HttpRequest &newHttpRequest, void *newReques
             struct tm *utc_struct = gmtime(&gmt_time);
             std::string UTCTime(asctime(utc_struct));
             EXPIREDTIME = UTCTime;
+            EXPIREDTIME.erase(std::remove(EXPIREDTIME.begin(), EXPIREDTIME.end(), '\n'),
+                              EXPIREDTIME.end());
         }
         writeLogFile(requestID + ": in cache, but expire at " + EXPIREDTIME);
         return;
@@ -114,7 +118,7 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
     std::string requestID = std::to_string(((Request *)newRequest)->getRequestID());
     if (mode == "not cacheable")
     {
-        writeLogFile(requestID + ": not cacheable beacause response is private and/or no-store");
+        writeLogFile(requestID + ": not cacheable beacause response is private and/or no-store and/or chumked data");
         return;
     }
     if (mode == "cached expired")
@@ -123,6 +127,8 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
         if (webResponse.getHeaderMap().count("expires"))
         {
             EXPIREDTIME = Time::gmtToUTC(webResponse.getHeaderMap()["expires"]);
+            EXPIREDTIME.erase(std::remove(EXPIREDTIME.begin(), EXPIREDTIME.end(), '\n'),
+                              EXPIREDTIME.end());
         }
         else
         {
@@ -136,6 +142,8 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
             struct tm *utc_struct = gmtime(&gmt_time);
             std::string UTCTime(asctime(utc_struct));
             EXPIREDTIME = UTCTime;
+            EXPIREDTIME.erase(std::remove(EXPIREDTIME.begin(), EXPIREDTIME.end(), '\n'),
+                              EXPIREDTIME.end());
         }
         writeLogFile(requestID + ": cached, expires at " + EXPIREDTIME);
         return;
