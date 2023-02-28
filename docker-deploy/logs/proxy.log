@@ -1,0 +1,86 @@
+0: "GET http://www.httpwatch.com/httpgallery/methods/ HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:30 2023
+0: not in cache
+0: Requesting "GET http://www.httpwatch.com/httpgallery/methods/ HTTP/1.1" from www.httpwatch.com
+0: Received "HTTP/1.1 200 OK" from www.httpwatch.com
+0: not cacheable beacause response is private and/or no-store and/or chunked data
+1: "GET http://www.httpwatch.com/httpgallery/methods/retry.png HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:30 2023
+1: not in cache
+1: Requesting "GET http://www.httpwatch.com/httpgallery/methods/retry.png HTTP/1.1" from www.httpwatch.com
+1: Received "HTTP/1.1 304 Not Modified" from www.httpwatch.com
+4: "CONNECT img-getpocket.cdn.mozilla.net:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:31 2023
+3: "CONNECT www.httpwatch.com:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:31 2023
+2: "GET http://www.httpwatch.com/assets/images/menu-btn-bg.png HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:31 2023
+2: not in cache
+2: Requesting "GET http://www.httpwatch.com/assets/images/menu-btn-bg.png HTTP/1.1" from www.httpwatch.com
+5: "GET http://www.httpwatch.com/assets/images/arrow1.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:31 2023
+5: not in cache
+5: Requesting "GET http://www.httpwatch.com/assets/images/arrow1.gif HTTP/1.1" from www.httpwatch.com
+4: Responding "HTTP/1.1 200 OK"
+3: Responding "HTTP/1.1 200 OK"
+2: Received "HTTP/1.1 301 Moved Permanently" from www.httpwatch.com
+5: Received "HTTP/1.1 301 Moved Permanently" from www.httpwatch.com
+8: "GET http://info.cern.ch/ HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:37 2023
+8: not in cache
+8: Requesting "GET http://info.cern.ch/ HTTP/1.1" from info.cern.ch
+7: "CONNECT www.google-analytics.com:443 HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:37 2023
+7: Responding "HTTP/1.1 200 OK"
+7: Tunnel closed
+8: Received "HTTP/1.1 200 OK" from info.cern.ch
+8: cached, expires at Thu Jan  1 00:09:59 1970
+8: Responding "HTTP/1.1 200 OK"
+9: "GET http://info.cern.ch/favicon.ico HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:38 2023
+9: not in cache
+9: Requesting "GET http://info.cern.ch/favicon.ico HTTP/1.1" from info.cern.ch
+9: Received "HTTP/1.1 200 OK" from info.cern.ch
+9: cached, expires at Thu Jan  1 00:09:59 1970
+9: Responding "HTTP/1.1 200 OK"
+10: "GET http://info.cern.ch/hypertext/WWW/TheProject.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:39 2023
+10: not in cache
+10: Requesting "GET http://info.cern.ch/hypertext/WWW/TheProject.html HTTP/1.1" from info.cern.ch
+10: Received "HTTP/1.1 200 OK" from info.cern.ch
+10: cached, expires at Thu Jan  1 00:09:59 1970
+10: Responding "HTTP/1.1 200 OK"
+11: "GET http://info.cern.ch/hypertext/WWW/Status.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:41 2023
+11: not in cache
+11: Requesting "GET http://info.cern.ch/hypertext/WWW/Status.html HTTP/1.1" from info.cern.ch
+11: Received "HTTP/1.1 200 OK" from info.cern.ch
+11: cached, expires at Thu Jan  1 00:09:59 1970
+11: Responding "HTTP/1.1 200 OK"
+12: "GET http://info.cern.ch/hypertext/WWW/LineMode/Status.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:42 2023
+12: not in cache
+12: Requesting "GET http://info.cern.ch/hypertext/WWW/LineMode/Status.html HTTP/1.1" from info.cern.ch
+12: Received "HTTP/1.1 200 OK" from info.cern.ch
+12: cached, expires at Thu Jan  1 00:09:59 1970
+12: Responding "HTTP/1.1 200 OK"
+13: "GET http://info.cern.ch/hypertext/WWW/People.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:43 2023
+13: not in cache
+13: Requesting "GET http://info.cern.ch/hypertext/WWW/People.html HTTP/1.1" from info.cern.ch
+13: Received "HTTP/1.1 200 OK" from info.cern.ch
+13: cached, expires at Thu Jan  1 00:09:59 1970
+13: Responding "HTTP/1.1 200 OK"
+14: "GET http://info.cern.ch/hypertext/WWW/NeXT/WorldWideWeb.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:47 2023
+14: not in cache
+14: Requesting "GET http://info.cern.ch/hypertext/WWW/NeXT/WorldWideWeb.html HTTP/1.1" from info.cern.ch
+14: Received "HTTP/1.1 200 OK" from info.cern.ch
+14: cached, expires at Thu Jan  1 00:09:59 1970
+14: Responding "HTTP/1.1 200 OK"
+15: "GET http://info.cern.ch/hypertext/DataSources/Top.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:49 2023
+15: not in cache
+15: Requesting "GET http://info.cern.ch/hypertext/DataSources/Top.html HTTP/1.1" from info.cern.ch
+15: Received "HTTP/1.1 200 OK" from info.cern.ch
+15: cached, expires at Thu Jan  1 00:09:59 1970
+15: Responding "HTTP/1.1 200 OK"
+16: "GET http://info.cern.ch/hypertext/WWW/FAQ/List.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:50 2023
+16: not in cache
+16: Requesting "GET http://info.cern.ch/hypertext/WWW/FAQ/List.html HTTP/1.1" from info.cern.ch
+16: Received "HTTP/1.1 200 OK" from info.cern.ch
+16: cached, expires at Thu Jan  1 00:09:59 1970
+16: Responding "HTTP/1.1 200 OK"
+17: "GET http://info.cern.ch/hypertext/WWW/FAQ/Bootstrap.html HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:53:51 2023
+17: not in cache
+17: Requesting "GET http://info.cern.ch/hypertext/WWW/FAQ/Bootstrap.html HTTP/1.1" from info.cern.ch
+17: Received "HTTP/1.1 200 OK" from info.cern.ch
+17: cached, expires at Thu Jan  1 00:09:59 1970
+17: Responding "HTTP/1.1 200 OK"
+4: Tunnel closed
+3: Tunnel closed
