@@ -26,6 +26,6 @@ public:
     static HttpResponse recvAllData(Client &client, std::string server_meg, size_t contentLength, size_t msgBodySize);
     static HttpResponse sendMsgToWebserver(HttpRequest &newHttpRequest, void *newRequest);
     static void sendMsgFromProxy(int sockfd, const char *msg, size_t size);
-    static void sendFormedHttpResponse(HttpResponse& formed_response, HttpRequest& newHttpRequest, void *newRequest);
+    static void sendFormedHttpResponse(HttpResponse &formed_response, HttpRequest &newHttpRequest, void *newRequest);
     static HttpResponse getFormedHttpResponse(const int status_code);
 };

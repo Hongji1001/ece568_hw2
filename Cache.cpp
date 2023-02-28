@@ -177,7 +177,6 @@ bool Cache::isReqForbiden(const HttpRequest &request)
 
 bool Cache::isResForbiden(const HttpResponse &response)
 {
-    std::cout << response.getHeaderMap().count("cache-control") << std::endl;
     return !(response.getHeaderMap().count("cache-control") == 0 ||
              (response.getHeaderMap().count("cache-control") != 0 &&
               (response.getHeaderMap()["cache-control"].find("private") == std::string::npos && response.getHeaderMap()["cache-control"].find("no-store") == std::string::npos)));
@@ -193,6 +192,13 @@ bool Cache::isReqMustRevalid(HttpRequest &request)
 bool Cache::isResMustRevalid(std::string &cacheKey)
 {
     HttpResponse fullResponse(getCacheNodeFullResponse(cacheKey));
+    return !(fullResponse.getHeaderMap().count("cache-control") == 0 ||
+             (fullResponse.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
+              fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));
+}
+
+bool Cache::isResMustRevalid(HttpResponse &fullResponse)
+{
     return !(fullResponse.getHeaderMap().count("cache-control") == 0 ||
              (fullResponse.getHeaderMap()["cache-control"].find("no-cache") == std::string::npos &&
               fullResponse.getHeaderMap()["cache-control"].find("must-revalidate") == std::string::npos));

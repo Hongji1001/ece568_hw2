@@ -188,7 +188,7 @@ void Proxy::handleCONNECT(HttpRequest &newHttpRequest, void *newRequest)
         }
     }
     close(((Request *)newRequest)->getClientFd());
-    std::string requestID = std::to_string(((Request*)newRequest)->getRequestID());
+    std::string requestID = std::to_string(((Request *)newRequest)->getRequestID());
     proxyLog.writeLogFile(requestID + ": " + std::string("Tunnel closed"));
 }
 
@@ -328,7 +328,8 @@ HttpResponse Proxy::recvAllData(Client &client, std::string server_meg, size_t c
         recv_msg_str += temp;
         msgCurSize += len;
     }
-    if (msgCurSize < contentLength){
+    if (msgCurSize < contentLength)
+    {
         // corrupted response: doesn't receive the correct length response
         int status_code = 502;
         return getFormedHttpResponse(status_code);
@@ -385,6 +386,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             std::string ETag = cache.getCacheNodeETag(cacheKey);
             std::string LastModified = cache.getCacheNodeLastModified(cacheKey);
             std::cout << "缓存新鲜 ";
+            proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "valid", "");
             if ((newHttpRequest.getHeaderMap().count("if-none-match") != 0 && newHttpRequest.getHeaderMap()["if-none-match"] == ETag) ||
                 (newHttpRequest.getHeaderMap().count("if-modified-since") != 0 && newHttpRequest.getHeaderMap()["if-modified-since"] == LastModified))
             {
@@ -403,6 +405,9 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
         else
         {
             std::cout << "缓存不新鲜 ";
+            // TODO：计算过期时间，缓存不新鲜一定是incache的，干脆把incache的响应传进去得了
+            std::string resp = cache.getCacheNodeFullResponse(cacheKey);
+            proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "expired", resp);
             // TODO：这里有点小问题？如果代理的不新鲜了，浏览器也一定不新鲜吧
             HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
             if (webResponse.getStatusCode() == "400")
@@ -423,6 +428,14 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             if (!cache.isResForbiden(webResponse))
             {
                 std::cout << "响应不禁止缓存，存入缓存" << std::endl;
+                if (cache.isResMustRevalid(webResponse))
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "re-validation");
+                }
+                else
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "cached expired");
+                }
                 cache.put(webResponse.getRawResponseText(), cacheKey);
                 std::cout << "将更新后缓存中的响应返回浏览器 " << std::endl;
                 std::string cachedResponse = cache.get(cacheKey);
@@ -431,6 +444,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             else
             {
                 std::cout << "响应禁止缓存，直接发送响应" << std::endl;
+                proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                 sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
             }
         }
@@ -438,6 +452,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
     else
     {
         std::cout << "代理中没有缓存 ";
+        proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "not in cache", "");
         HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
         if (webResponse.getStatusCode() == "400")
         {
@@ -460,6 +475,14 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             if (webResponse.getStatusCode() == "200")
             {
                 std::cout << "响应不禁止缓存，存入缓存" << std::endl;
+                if (cache.isResMustRevalid(webResponse))
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "re-validation");
+                }
+                else
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "cached expired");
+                }
                 cache.put(webResponse.getRawResponseText(), cacheKey);
                 std::cout << "将缓存中的响应返回浏览器 " << std::endl;
                 std::string cachedResponse = cache.get(cacheKey);
@@ -472,6 +495,7 @@ void Proxy::conditionalReq(HttpRequest &newHttpRequest, void *newRequest)
         else
         {
             std::cout << "响应禁止缓存，直接发送响应" << std::endl;
+            proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
             sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
         }
     }
@@ -481,12 +505,13 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
 {
     std::cout << "进入非条件请求验证" << std::endl;
     int sockfd = ((Request *)newRequest)->getClientFd();
+    std::string requestID = std::to_string(((Request *)newRequest)->getRequestID());
     // 检验是否禁用缓存
     if (!cache.isReqForbiden(newHttpRequest))
     {
         std::cout << "请求不禁用缓存 ";
-        // 验证代理中是否有缓存
         std::string cacheKey = newHttpRequest.getRequestTarget();
+        // 验证代理中是否有缓存
         if (cache.isCached(cacheKey))
         {
             std::cout << "代理中有缓存 ";
@@ -496,6 +521,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             if (cache.isReqMustRevalid(newHttpRequest) || cache.isResMustRevalid(cacheKey))
             {
                 std::cout << "需要强制验证 ";
+                proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "requires validation", "");
                 newHttpRequest.buildConRequest(ETag, LastModified);
                 HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
                 if (webResponse.getStatusCode() == "400")
@@ -513,10 +539,17 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                     sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
                     return;
                 }
-                // TODO：如果没收到响应怎么办
                 if (!cache.isResForbiden(webResponse))
                 {
                     std::cout << "响应不禁止缓存，存入缓存" << std::endl;
+                    if (cache.isResMustRevalid(webResponse))
+                    {
+                        proxyLog.writeResCacheLogLine(webResponse, newRequest, "re-validation");
+                    }
+                    else
+                    {
+                        proxyLog.writeResCacheLogLine(webResponse, newRequest, "cached expired");
+                    }
                     cache.put(webResponse.getRawResponseText(), cacheKey);
                     std::cout << "将缓存中的响应返回浏览器 " << std::endl;
                     std::string cachedResponse = cache.get(cacheKey);
@@ -524,9 +557,8 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                 }
                 else
                 {
-                    // TODO：会不会存在304和禁止缓存共同出现的情况，感觉就不会存在啊？就是原本缓存了，然后发出去又不让缓存了
-                    // 考虑不修改，重新发一次？
                     std::cout << "禁止缓存，直接发送响应" << std::endl;
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                     sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
                 }
             }
@@ -538,12 +570,15 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                 {
                     std::cout << "缓存新鲜 ";
                     std::cout << "将缓存中的响应返回浏览器 " << std::endl;
+                    proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "valid", "");
                     std::string cachedResponse = cache.get(cacheKey);
                     sendMsgFromProxy(sockfd, cachedResponse.c_str(), cachedResponse.size());
                 }
                 else
                 {
                     std::cout << "缓存不新鲜 ";
+                    std::string resp = cache.getCacheNodeFullResponse(cacheKey);
+                    proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "expired", resp);
                     newHttpRequest.buildConRequest(ETag, LastModified);
                     HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
                     if (webResponse.getStatusCode() == "400")
@@ -564,6 +599,14 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                     if (!cache.isResForbiden(webResponse))
                     {
                         std::cout << "响应不禁止缓存，存入缓存" << std::endl;
+                        if (cache.isResMustRevalid(webResponse))
+                        {
+                            proxyLog.writeResCacheLogLine(webResponse, newRequest, "re-validation");
+                        }
+                        else
+                        {
+                            proxyLog.writeResCacheLogLine(webResponse, newRequest, "cached expired");
+                        }
                         cache.put(webResponse.getRawResponseText(), cacheKey);
                         std::cout << "将缓存中的响应返回浏览器 " << std::endl;
                         std::string cachedResponse = cache.get(cacheKey);
@@ -572,6 +615,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
                     else
                     {
                         std::cout << "响应禁止缓存，直接发送响应" << std::endl;
+                        proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                         sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
                     }
                 }
@@ -580,6 +624,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
         else
         {
             std::cout << "代理中没有缓存 ";
+            proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "not in cache", "");
             HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
             std::cout << "605行:" << std::endl;
             if (webResponse.getStatusCode() == "400")
@@ -600,7 +645,15 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             if (!cache.isResForbiden(webResponse))
             {
                 std::cout << "响应不禁止缓存，存入缓存" << std::endl;
-                std::cout << "是否禁止：" << cache.isResForbiden(webResponse.getRawResponseText()) << std::endl;
+                // std::cout << "是否禁止：" << cache.isResForbiden(webResponse.getRawResponseText()) << std::endl;
+                if (cache.isResMustRevalid(webResponse))
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "re-validation");
+                }
+                else
+                {
+                    proxyLog.writeResCacheLogLine(webResponse, newRequest, "cached expired");
+                }
                 cache.put(webResponse.getRawResponseText(), cacheKey);
                 std::cout << "将缓存中的响应返回浏览器 " << std::endl;
                 std::string cachedResponse = cache.get(cacheKey);
@@ -609,6 +662,7 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
             else
             {
                 std::cout << "响应禁止缓存，直接发送响应返回浏览器 " << std::endl;
+                proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
                 sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
             }
         }
@@ -616,17 +670,20 @@ void Proxy::nonConditionalReq(HttpRequest &newHttpRequest, void *newRequest)
     else
     {
         std::cout << "请求禁用缓存 ";
+        proxyLog.writeReqCacheLogLine(newHttpRequest, newRequest, "not in cache", "");
         HttpResponse webResponse = sendMsgToWebserver(newHttpRequest, newRequest);
         if (webResponse.checkIsChunked())
         {
             return;
         }
         std::cout << "直接发送响应返回浏览器 " << std::endl;
+        proxyLog.writeResCacheLogLine(webResponse, newRequest, "not cacheable");
         sendMsgFromProxy(sockfd, webResponse.getRawResponseText().c_str(), webResponse.getRawResponseText().size());
     }
 }
 
-void Proxy::sendFormedHttpResponse(HttpResponse& formed_response, HttpRequest& newHttpRequest, void *newRequest){
+void Proxy::sendFormedHttpResponse(HttpResponse &formed_response, HttpRequest &newHttpRequest, void *newRequest)
+{
     proxyLog.writeResponseLogLine(formed_response.getStartLine(), newRequest, newHttpRequest.getHost(), "from_proxy_to_browser");
     size_t raw_reponse_size = formed_response.getRawResponseText().size();
     sendMsgFromProxy(((Request *)newRequest)->getClientFd(), formed_response.getRawResponseText().c_str(), raw_reponse_size);
@@ -638,21 +695,21 @@ HttpResponse Proxy::getFormedHttpResponse(const int status_code)
     if (status_code == 400)
     {
         const char *HttpResponse_raw = "HTTP/1.1 400 Bad Request\r\n"
-                        "Content-Type: text/html; charset=UTF-8\r\n"
-                        "Date: Mon, 27 Feb 2023 18:53:18 GMT\r\n"
-                        "Content-Length: 82\r\n"
-                        "Sozu-Id: 01GTA3HNM6SFS02WVXDF112N5N\r\n\r\n"
-                        "<html><h2>Proxy Server send you a 400 bad Request(malformed Request)</h2></html>\r\n";
+                                       "Content-Type: text/html; charset=UTF-8\r\n"
+                                       "Date: Mon, 27 Feb 2023 18:53:18 GMT\r\n"
+                                       "Content-Length: 82\r\n"
+                                       "Sozu-Id: 01GTA3HNM6SFS02WVXDF112N5N\r\n\r\n"
+                                       "<html><h2>Proxy Server send you a 400 bad Request(malformed Request)</h2></html>\r\n";
         return HttpResponse(std::string(HttpResponse_raw, strlen(HttpResponse_raw)));
     }
     else if (status_code == 502)
     {
         const char *HttpResponse_raw = "HTTP/1.1 502 Bad Gateway\r\n"
-                    "Content-Type: text/html; charset=UTF-8\r\n"
-                    "Date: Mon, 27 Feb 2023 19:16:41 GMT\r\n"
-                    "Content-Length: 83\r\n"
-                    "Sozu-Id: 01GTA4WDEGJF478FBYEC9BMZ7W\r\n\r\n"
-                    "<html><h2>Proxy Server send you a 502 Bad Gateway(corrupted Response)</h2></html>\r\n";
+                                       "Content-Type: text/html; charset=UTF-8\r\n"
+                                       "Date: Mon, 27 Feb 2023 19:16:41 GMT\r\n"
+                                       "Content-Length: 83\r\n"
+                                       "Sozu-Id: 01GTA4WDEGJF478FBYEC9BMZ7W\r\n\r\n"
+                                       "<html><h2>Proxy Server send you a 502 Bad Gateway(corrupted Response)</h2></html>\r\n";
         return HttpResponse(std::string(HttpResponse_raw, strlen(HttpResponse_raw)));
     }
     else
