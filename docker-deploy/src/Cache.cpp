@@ -1,17 +1,23 @@
 #include "Cache.hpp"
-void Cache::addFromHead(CacheNode *nodeToAdd)
+void Cache::addFromHead(CacheNode *nodeToAdd, int mode)
 {
     if (head == NULL)
     {
         head = nodeToAdd;
         tail = nodeToAdd;
-        size++;
+        if (mode == 0)
+        {
+            size++;
+        }
         return;
     }
     nodeToAdd->next = head;
     head->prev = nodeToAdd;
     head = nodeToAdd;
-    size++;
+    if (mode == 0)
+    {
+        size++;
+    }
 }
 
 void Cache::moveToHead(CacheNode *nodeToMove)
@@ -26,13 +32,13 @@ void Cache::moveToHead(CacheNode *nodeToMove)
         nodeToMove->prev->next = nodeToMove->next;
         nodeToMove->next = NULL;
         nodeToMove->prev = NULL;
-        addFromHead(nodeToMove);
+        addFromHead(nodeToMove, 1);
         return;
     }
     tail = nodeToMove->prev;
     nodeToMove->prev->next = NULL;
     nodeToMove->prev = NULL;
-    addFromHead(nodeToMove);
+    addFromHead(nodeToMove, 1);
 }
 
 void Cache::removeTail()
@@ -49,20 +55,24 @@ void Cache::removeTail()
     }
     tail = tail->prev;
     delete tempTail;
+    std::cout << "start to reduce size" << std::endl;
     size--;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::cout << "start to remove" << std::endl;
+    // std::lock_guard<std::mutex> lock(mtx);
+    std::cout << "start to lock" << std::endl;
     auto it = cacheMap.find(cacheKey);
     if (it != cacheMap.end())
     {
         cacheMap.erase(it);
     }
+    std::cout << "unlock" << std::endl;
 }
 Cache::Cache() : CAPACITY(CACHE_CAPACITY), size(0), head(NULL), tail(NULL) {}
 Cache::Cache(unsigned int cap) : CAPACITY(cap), size(0), head(NULL), tail(NULL) {}
 
 void Cache::put(std::string rawResponse, const std::string &cacheKey)
 {
-    std::cout << rawResponse << std::endl;
+    /// std::cout << rawResponse << std::endl;
     HttpResponse response(rawResponse);
     std::cout << "成功进入缓存，缓存容量为 " << this->CAPACITY << " 当前大小为 " << this->size << std::endl;
     // 验证响应是否禁用缓存
@@ -70,7 +80,7 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
     if (isCached(cacheKey))
     {
         // 更新CacheNode的Etag和responseTime
-        std::lock_guard<std::mutex> lock(mtx);
+        // std::lock_guard<std::mutex> lock(mtx);
         CacheNode *cachedRes = cacheMap[cacheKey];
         cachedRes->responseTime = Time::getLocalUTC();
         if (response.getHeaderMap().count("etag") != 0)
@@ -103,16 +113,19 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
         return;
     }
     // 如果是强制缓存
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::cout << "初次缓存" << std::endl;
     // 缓存满了,删除最后一个结点
     if (isFull())
     {
+        std::cout << "enter into remove tail func" << std::endl;
+        if (tail == NULL)
+            std::cout << "tail pointer is NULL and enter to remove tail" << std::endl;
         removeTail();
     }
     // 新建一个CacheNode加入双向链表，也加入cacheMap
     std::cout << std::endl;
-    std::cout << response.getMsgBody() << std::endl;
+    // std::cout << response.getMsgBody() << std::endl;
     std::cout << "接收到的响应内容：" << std::endl;
     CacheNode *newCache = new CacheNode(response, cacheKey);
     std::cout << response.getHead() << std::endl;
@@ -124,12 +137,12 @@ void Cache::put(std::string rawResponse, const std::string &cacheKey)
     std::cout << newCache->rawResponseStartLine << std::endl;
     // 将新建的CacheNode添加到头部
     std::cout << "开始将响应存入缓存：" << std::endl;
-    addFromHead(newCache);
+    addFromHead(newCache, 0);
     std::cout << "已将新缓存添加到头部" << std::endl;
     // 加入cacheMap
     cacheMap[cacheKey] = newCache;
     std::cout << "加入缓存的响应行为：" << cacheMap[cacheKey]->rawResponseStartLine << std::endl;
-    std::cout << "加入缓存的响应体为：" << cacheMap[cacheKey]->rawResponseBody << std::endl;
+    // std::cout << "加入缓存的响应体为：" << cacheMap[cacheKey]->rawResponseBody << std::endl;
 }
 
 std::string Cache::get(std::string &cacheKey)
@@ -140,7 +153,7 @@ std::string Cache::get(std::string &cacheKey)
 // danger log: do not take multiple response into consideration
 bool Cache::isCached(const std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     bool flag = cacheMap.count(cacheKey) != 0;
     return flag;
 }
@@ -216,35 +229,35 @@ bool Cache::isResMustRevalid(HttpResponse &fullResponse)
 
 std::string Cache::getCacheNodeFullResponse(std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::string full = cacheMap[cacheKey]->getFullResponse();
     return full;
 }
 
 std::string Cache::getCacheNodeETag(std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::string ETag = cacheMap[cacheKey]->ETag;
     return ETag;
 }
 
 std::string Cache::getCacheNodeLastModified(std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::string LM = cacheMap[cacheKey]->LastModified;
     return LM;
 }
 
 std::string Cache::getCacheNodeResTime(std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::string RT = cacheMap[cacheKey]->responseTime;
     return RT;
 }
 
 std::string Cache::getCacheRawResHead(std::string &cacheKey)
 {
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     std::string RRH = cacheMap[cacheKey]->rawResponseHead;
     return RRH;
 }
