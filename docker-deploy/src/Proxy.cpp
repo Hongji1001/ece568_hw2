@@ -258,6 +258,7 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest &newHttpRequest, void *newReq
     catch(const std::exception& e)
     {
         int status_code = 400;
+        std::cout << "send request to webserver failed" << std::endl;
         return getFormedHttpResponse(status_code);
     }
     // recv response from webserver
