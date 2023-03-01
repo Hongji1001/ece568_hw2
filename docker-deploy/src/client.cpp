@@ -81,7 +81,7 @@ void Client::closeClient()
 
 void Client::sendRequest(const void *msg, const size_t size)
 {
-    int numBytes = 0;
+    size_t numBytes = 0;
     int recvBytes = 0;
     while ((numBytes < size))
     {

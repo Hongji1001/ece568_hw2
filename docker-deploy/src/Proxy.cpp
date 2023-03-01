@@ -211,14 +211,8 @@ void Proxy::handlePOST(HttpRequest &newHttpRequest, void *newRequest)
 
 void Proxy::handleGET(HttpRequest &newHttpRequest, void *newRequest)
 {
-<<<<<<< HEAD:docker-deploy/src/Proxy.cpp
     try
     {        
-=======
-    std::cout << "缓存中键值对数量为：" << cache.cacheMap.size();
-    try
-    {
->>>>>>> main:Proxy.cpp
         if (newHttpRequest.getHeaderMap().count("if-none-match") != 0 || newHttpRequest.getHeaderMap().count("if-modified-since") != 0)
         {
             std::cout << "开始处理条件请求 " << std::endl;
@@ -230,11 +224,7 @@ void Proxy::handleGET(HttpRequest &newHttpRequest, void *newRequest)
             nonConditionalReq(newHttpRequest, newRequest);
         }
     }
-<<<<<<< HEAD:docker-deploy/src/Proxy.cpp
     catch(const std::exception& e)
-=======
-    catch (const std::exception &e)
->>>>>>> main:Proxy.cpp
     {
         std::cerr << "GET Request failed" << std::endl;
         std::cerr << e.what() << '\n';
@@ -265,16 +255,10 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest &newHttpRequest, void *newReq
     {
         proxy_own_client.sendRequest(newHttpRequest.getRawRequestText().c_str(), http_raw_text_size);
     }
-<<<<<<< HEAD:docker-deploy/src/Proxy.cpp
     catch(const std::exception& e)
     {
         int status_code = 400;
         std::cout << "send request to webserver failed" << std::endl;
-=======
-    catch (const std::exception &e)
-    {
-        int status_code = 400;
->>>>>>> main:Proxy.cpp
         return getFormedHttpResponse(status_code);
     }
     // recv response from webserver
@@ -330,7 +314,7 @@ HttpResponse Proxy::sendMsgToWebserver(HttpRequest &newHttpRequest, void *newReq
 
 void Proxy::sendMsgFromProxy(int sockfd, const char *msg, size_t size)
 {
-    int numBytes = 0;
+    size_t numBytes = 0;
     int recvBytes = 0;
     while ((numBytes < size))
     {

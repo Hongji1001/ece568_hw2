@@ -60,7 +60,7 @@
 
 
 
-(4) GET malformed request(error port) invalid port 81 http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif
+(4) GET malformed request(error port) the proxy server needs more time to give response when browsing this website. Because the TCP protocol determines whether communication needs to be closed with a response time. invalid port 81 http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif 
 
 0: "GET http://www.httpwatch.com:81/httpgallery/errors/images/imageb.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 19:54:25 2023
 
@@ -74,13 +74,28 @@
 
 0: Responding "HTTP/1.1 400 Bad Request"
 
+
+
 (5) GET in cache, valid 304
 
-38: "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from 10.194.9.4 @ Tue Feb 28 20:02:34 2023
-
-38: in cache, valid
-
-38: Responding "HTTP/1.1 304 Not Modified"
+91: "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:51:40 2023
+91: not in cache
+91: Requesting "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from www.httpwatch.com
+91: Received "HTTP/1.1 200 OK" from www.httpwatch.com
+91: cached, but requires re-validation
+91: Responding "HTTP/1.1 200 OK"
+92: "GET http://www.httpwatch.com/favicon.ico HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:51:40 2023
+92: not in cache
+92: Requesting "GET http://www.httpwatch.com/favicon.ico HTTP/1.1" from www.httpwatch.com
+92: Received "HTTP/1.1 200 OK" from www.httpwatch.com
+92: cached, but requires re-validation
+92: Responding "HTTP/1.1 200 OK"
+93: "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:51:42 2023
+93: in cache, valid
+93: Responding "HTTP/1.1 304 Not Modified"
+94: "GET http://www.httpwatch.com/assets/images/page-head-bg.gif HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:51:44 2023
+94: in cache, valid
+94: Responding "HTTP/1.1 304 Not Modified"
 
 
 
@@ -98,15 +113,27 @@
 
 119: Responding "HTTP/1.1 200 OK"
 
+
+
 (7) GET cached, expires at 
 
-183: Requesting "GET http://info.cern.ch/ HTTP/1.1" from info.cern.ch
+98: "GET http://info.cern.ch/ HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:53:12 2023
+98: not in cache
+98: Requesting "GET http://info.cern.ch/ HTTP/1.1" from info.cern.ch
+98: Received "HTTP/1.1 200 OK" from info.cern.ch
+98: cached, expires at Wed Mar  1 01:03:12 2023
+98: Responding "HTTP/1.1 200 OK"
+99: "GET http://info.cern.ch/favicon.ico HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:53:12 2023
+99: not in cache
+99: Requesting "GET http://info.cern.ch/favicon.ico HTTP/1.1" from info.cern.ch
+99: Received "HTTP/1.1 200 OK" from info.cern.ch
+99: cached, expires at Wed Mar  1 01:03:12 2023
+99: Responding "HTTP/1.1 200 OK"
+100: "GET http://info.cern.ch/ HTTP/1.1" from 174.109.29.252 @ Wed Mar  1 00:53:13 2023
+100: in cache, valid
+100: Responding "HTTP/1.1 304 Not Modified"
 
-183: Received "HTTP/1.1 200 OK" from info.cern.ch
 
-183: cached, expires at Tue Feb 28 20:18:09 2023
-
-183: Responding "HTTP/1.1 200 OK"
 
 (8) GET in cache, valid
 

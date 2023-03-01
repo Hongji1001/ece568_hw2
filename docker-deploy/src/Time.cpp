@@ -10,7 +10,7 @@ std::string Time::getLocalUTC()
 std::string Time::gmtToUTC(const std::string &gmtTime)
 {
     // covert to tm struct
-    std::tm tm = {};
+    std::tm tm = {0};
     strptime(gmtTime.c_str(), "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
     // covert to UTC time

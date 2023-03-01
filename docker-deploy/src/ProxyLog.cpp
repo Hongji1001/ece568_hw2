@@ -83,7 +83,7 @@ void ProxyLog::writeReqCacheLogLine(HttpRequest &newHttpRequest, void *newReques
         {
             std::string Date = temp.getHeaderMap()["date"];
             size_t maxAge = temp.getMaxAge();
-            struct tm gmt_struct;
+            struct tm gmt_struct = {0};
             strptime(Date.c_str(), "%a, %d %b %Y %T %Z", &gmt_struct);
             time_t gmt_time = mktime(&gmt_struct);
             std::tm *utc_time = std::gmtime(&gmt_time);
@@ -136,7 +136,7 @@ void ProxyLog::writeResCacheLogLine(HttpResponse &webResponse, void *newRequest,
         {
             std::string Date = webResponse.getHeaderMap()["date"];
             size_t maxAge = webResponse.getMaxAge();
-            struct tm gmt_struct;
+            struct tm gmt_struct = {0};
             strptime(Date.c_str(), "%a, %d %b %Y %T %Z", &gmt_struct);
             time_t gmt_time = mktime(&gmt_struct);
             std::tm *utc_time = std::gmtime(&gmt_time);

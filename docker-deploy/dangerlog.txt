@@ -1,10 +1,59 @@
-1. Expire field is not considered, because the expire field is the standard in http1.0, in the new standard http1.1 with cache-control control caching, so use the cache-control caching policy specified in the cache-control.
+Exception guarantees: strong
 
-2. The response received must have a Date field by default, and according to the RFC, most of the time it is necessary to include a Date field in the response to determine if the cache is fresh and to calculate the age.
+What failures did you handle in your code? 
 
-3. The Age field in the response is not considered, and the age field is defaulted to 0 when determining the freshness of the cache.
+(1) can't not connect to webserver(wrong port, hostname) (2) the proxy failed sending message(broken pipe) (3) malformed request (4) corrupted response （5) cannot init as a server
 
-4. Only basic validation of the request format is performed, specifically only the following: whether the request is formatted into request lines, request headers, request message bodies and whether the request lines follow the method SP URI SP httpversion format.
+I solved these failures by using Try catch block. If the try block throw an exception, the program will catch the exception and run as normally
 
-5. If the response does not have a cache-control field, or if the proxy cache is allowed but no max-age field is provided, the default cache of ten minutes in the proxy service will be used.
 
+However, there are some other failures we don't solve
+
+1. If the client does not specify 443 port when they request CONNECT request. We don't set the default port to 443
+
+2. We use 'stoul' function to convert string to unsigned long int number. However, we don't handle the exception when we enter some malformed string.
+
+3. Expire field is not considered, because the expire field is the standard in http1.0, in the new standard http1.1 with cache-control control caching, so use the cache-control caching policy specified in the cache-control.
+
+4. The response received must have a Date field by default, and according to the RFC, most of the time it is necessary to include a Date field in the response to determine if the cache is fresh and to calculate the age.
+
+5. The Age field in the response is not considered, and the age field is defaulted to 0 when determining the freshness of the cache.
+
+6. Only basic validation of the request format is performed, specifically only the following: whether the request is formatted into request lines, request headers, request message bodies and whether the request lines follow the method SP URI SP httpversion format.
+
+7. If the response does not have a cache-control field, or if the proxy cache is allowed but no max-age field is provided, the default cache of ten minutes in the proxy service will be used.
+
+
+
+Caching strategy:
+
+When sending requests.
+For non-conditional requests.
+First verify that the request contains the "private/no-store" field.
+	If it does, the request is forwarded directly to the webserver.
+	If not, verify that there is a cache in the proxy.
+		If there is a cache, verify that the response or request is cached by the proxy with the "no-cache/must-revalidate/max-age=0" field.
+			If so, use the Etag or LastModified field in the cached response to modify the request to a conditional request and send it to the webserver.
+			If not, verify that if the cache is fresh.
+				If the cache is fresh, the response is removed from the cache.
+				If the cache is not fresh, the request is modified to a conditional request using the Etag or LastModified field in the cache response and sent to the webserver.
+For conditional requests.
+First verify that the cache is present in the proxy.
+	If there is no cache: forward the request to the webserver
+	If there is a cache: verify that the cache is fresh (compare etag or if-modified-since field)
+		If the cache is fresh, the proxy sends a 304 not modified response to the browser
+		If the cache is not fresh, the request is forwarded to the weiserver
+
+When receiving a response, do the following:
+Verify that the status code is 400, and continue if it is not.
+Verify that the response is chunked data, or continue if it is not.
+Verify that the response code is something other than 304 and 200, or continue if it is not.
+	Verify that the response is cache-prohibited (i.e., does it contain a private/no-store field).
+		If the response is not cache-prohibited, it is stored in the cache
+		If caching is disabled, return directly to the browser
+Cache size:
+Use the target-resource in the request to uniquely correspond to a cache node, and use the number of cache nodes to control the size of the cache.
+The cache size is 100 nodes.
+
+When the cache is removed:
+If the cache is full, the first node added to the cache is removed (queue). If a node in the cache is expired but is updated, the update time is considered to be the time when the new one was added to the cache. If the cache is not full, then the expired cache is not removed.
