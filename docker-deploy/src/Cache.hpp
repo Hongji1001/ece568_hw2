@@ -6,7 +6,7 @@
 #include "ProxyLog.hpp"
 #include "Time.hpp"
 
-#define CACHE_CAPACITY 10
+#define CACHE_CAPACITY 100
 class CacheNode
 {
 public:
@@ -25,16 +25,16 @@ public:
 
 class Cache
 {
-private:
+public:
     unsigned int CAPACITY;                       // max number of nodes in cache
     unsigned int size;                           // current number of nodes in cache
     std::map<std::string, CacheNode *> cacheMap; // map of URI and reponse (metadata)
     CacheNode *head;
     CacheNode *tail;
     std::mutex mtx;
-    void addFromHead(CacheNode *nodeToAdd); // 新增缓存的话，将其添加到头部，并将size+1
-    void moveToHead(CacheNode *nodeToMove); // 协商缓存更新etag后，要移动到链表头
-    void removeTail();                      // 缓存满了后，要从链表尾部删除缓存节点
+    void addFromHead(CacheNode *nodeToAdd, int mode); // 新增缓存的话，将其添加到头部，并将size+1
+    void moveToHead(CacheNode *nodeToMove);           // 协商缓存更新etag后，要移动到链表头
+    void removeTail();                                // 缓存满了后，要从链表尾部删除缓存节点
     // 按照response_time的时间顺序排列cache key
     // 节点中存cache key, max-age, reponseTime, Date首部, age_value(如果响应里有就用响应里的，否则用0), request_time(导致本次响应的请求发出的时间)
     // request_time不好搞啊
